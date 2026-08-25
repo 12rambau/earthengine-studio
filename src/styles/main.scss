@@ -1,5 +1,102 @@
 @layer vuetify-overrides {
+  :root {
+    color: #17241e;
+    background: #f4f6f1;
+    font-family: var(--v-font-mono);
+  }
+
+  html,
+  body,
+  #app {
+    width: 100%;
+    min-width: 320px;
+    min-height: 100%;
+    margin: 0;
+  }
+
+  .studio-shell {
+    min-height: 100dvh;
+    background: #f4f6f1;
+  }
+
+  .studio-header {
+    border-bottom: 1px solid #d9ded6;
+    background: #fcfdf9 !important;
+    color: #17241e;
+  }
+
+  .studio-header .v-toolbar__content {
+    gap: 16px;
+    padding-inline: 20px;
+  }
+
+  .studio-header__brand {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    color: #17241e;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .studio-header__divider {
+    block-size: 24px;
+  }
+
+  .studio-header__navigation {
+    align-self: stretch;
+  }
+
+  .studio-header__navigation .v-tab {
+    min-width: auto;
+    padding-inline: 10px;
+    color: #5b665f;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .studio-header__navigation .v-tab--selected {
+    color: #17241e;
+  }
+
+  .studio-main {
+    min-height: calc(100dvh - 56px);
+  }
+
+  .studio-canvas {
+    min-height: calc(100dvh - 56px);
+    background-color: #f4f6f1;
+    background-image:
+      linear-gradient(to right, rgb(75 91 81 / 8%) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(75 91 81 / 8%) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
   code, pre, .v-code {
     font-family: var(--v-font-mono);
+  }
+
+  @media (width <= 640px) {
+    .studio-header .v-toolbar__content {
+      gap: 8px;
+      padding-inline: 12px;
+    }
+
+    .studio-header__divider {
+      display: none;
+    }
+
+    .studio-header__navigation .v-tab {
+      padding-inline: 6px;
+    }
+
+    .studio-header__brand span {
+      display: none;
+    }
   }
 }
