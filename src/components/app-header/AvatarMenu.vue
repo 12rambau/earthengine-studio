@@ -29,7 +29,7 @@
     >
       <theme-selector-dialog />
 
-      <layout-customization-menu />
+      <layout-preference-dialog />
 
       <v-divider />
 
@@ -91,8 +91,8 @@
 
 <script lang="ts" setup>
   import { ref } from 'vue'
+  import LayoutPreferenceDialog from './avatar-menu/LayoutPreferenceDialog.vue'
   import ThemeSelectorDialog from './avatar-menu/ThemeSelectorDialog.vue'
-  import LayoutCustomizationMenu from './LayoutCustomizationMenu.vue'
 
   const isKeyboardShortcutsDialogOpen = ref(false)
   const keyboardShortcuts = [
