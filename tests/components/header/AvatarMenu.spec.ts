@@ -1,8 +1,10 @@
 import { mount } from '@vue/test-utils'
+import Cookies from 'js-cookie'
+import { createPinia } from 'pinia'
 import { describe, expect, it, vi } from 'vitest'
 import { createVuetify } from 'vuetify'
 import AvatarMenu from '@/components/header/AvatarMenu.vue'
-import { themePreferenceKey } from '@/components/header/theme'
+import { themePreferenceKey } from '@/stores/userPreferences'
 
 function mountAvatarMenu () {
   const vuetify = createVuetify({
@@ -14,7 +16,7 @@ function mountAvatarMenu () {
   const wrapper = mount(AvatarMenu, {
     attachTo: document.body,
     global: {
-      plugins: [vuetify],
+      plugins: [vuetify, createPinia()],
     },
   })
 
@@ -31,7 +33,7 @@ describe('AvatarMenu', () => {
   })
 
   it('applies the saved theme preference on mount', () => {
-    localStorage.setItem(themePreferenceKey, 'dark')
+    Cookies.set(themePreferenceKey, 'dark', { path: '/' })
     const { changeTheme, wrapper } = mountAvatarMenu()
 
     expect(changeTheme).toHaveBeenCalledWith('dark')

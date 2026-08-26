@@ -71,19 +71,20 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+  import { storeToRefs } from 'pinia'
+  import { computed, onBeforeUnmount, onMounted } from 'vue'
   import { useTheme } from 'vuetify'
   import {
-    isThemeName,
     resolveThemeName,
     type ThemeName,
     themeOptions,
-    themePreferenceKey,
-  } from './theme'
+    useUserPreferencesStore,
+  } from '@/stores/userPreferences'
 
   const theme = useTheme()
+  const userPreferencesStore = useUserPreferencesStore()
 
-  const selectedThemeName = ref<ThemeName>('system')
+  const { theme: selectedThemeName } = storeToRefs(userPreferencesStore)
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
   const themeLabel = computed(() => {
@@ -95,8 +96,7 @@
   })
 
   function setTheme (themeName: ThemeName) {
-    selectedThemeName.value = themeName
-    localStorage.setItem(themePreferenceKey, themeName)
+    userPreferencesStore.setTheme(themeName)
     applyTheme()
   }
 
@@ -111,12 +111,7 @@
   }
 
   onMounted(() => {
-    const storedThemeName = localStorage.getItem(themePreferenceKey)
-
-    if (isThemeName(storedThemeName)) {
-      selectedThemeName.value = storedThemeName
-    }
-
+    userPreferencesStore.initialize()
     deviceTheme.addEventListener('change', handleDeviceThemeChange)
     applyTheme()
   })

@@ -1,3 +1,4 @@
+import Cookies from 'js-cookie'
 import { afterEach, vi } from 'vitest'
 
 class ResizeObserver {
@@ -25,5 +26,9 @@ Object.defineProperty(window, 'matchMedia', {
 vi.stubGlobal('ResizeObserver', ResizeObserver)
 
 afterEach(() => {
+  for (const cookieName of Object.keys(Cookies.get())) {
+    Cookies.remove(cookieName, { path: '/' })
+  }
+
   localStorage.clear()
 })
