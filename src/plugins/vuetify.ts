@@ -12,6 +12,21 @@ import 'vuetify/styles'
 
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
+  defaults: {
+    VBtn: {
+      density: 'compact',
+    },
+    VCard: {
+      density: 'compact',
+    },
+    VList: {
+      density: 'compact',
+    },
+    VListItem: {
+      density: 'compact',
+      slim: true,
+    },
+  },
   theme: {
     defaultTheme: 'system',
   },

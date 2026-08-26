@@ -1,5 +1,6 @@
 <template>
   <v-menu
+    eager
     location="bottom end"
     offset="8"
   >
@@ -26,47 +27,7 @@
       density="comfortable"
       min-width="224"
     >
-      <v-menu
-        location="start"
-        offset="8"
-      >
-        <template #activator="{ props }">
-          <v-list-item
-            v-bind="props"
-            aria-label="Change appearance"
-            :prepend-icon="themeIcon"
-            :subtitle="themeLabel"
-            title="Appearance"
-          >
-            <template #append>
-              <v-icon icon="mdi-chevron-right" />
-            </template>
-          </v-list-item>
-        </template>
-
-        <v-list
-          aria-label="Appearance settings"
-          density="comfortable"
-          min-width="224"
-        >
-          <v-list-item
-            v-for="option in themeOptions"
-            :key="option.value"
-            :active="selectedThemeName === option.value"
-            :aria-label="option.title"
-            :prepend-icon="option.icon"
-            :title="option.title"
-            @click="setTheme(option.value)"
-          >
-            <template
-              v-if="selectedThemeName === option.value"
-              #append
-            >
-              <v-icon icon="mdi-check" />
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <theme-selector-dialog />
 
       <layout-customization-menu />
 
@@ -129,16 +90,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { storeToRefs } from 'pinia'
-  import { computed, ref } from 'vue'
-  import {
-    type ThemeName,
-    themeOptions,
-    useUserPreferencesStore,
-  } from '@/stores/userPreferences'
+  import { ref } from 'vue'
+  import ThemeSelectorDialog from './avatar-menu/ThemeSelectorDialog.vue'
   import LayoutCustomizationMenu from './LayoutCustomizationMenu.vue'
-
-  const userPreferencesStore = useUserPreferencesStore()
 
   const isKeyboardShortcutsDialogOpen = ref(false)
   const keyboardShortcuts = [
@@ -146,19 +100,6 @@
     { icon: 'mdi-dock-right', keys: ['Ctrl', 'Alt', 'B'], title: 'Toggle secondary sidebar' },
     { icon: 'mdi-dock-bottom', keys: ['Ctrl', 'J'], title: 'Toggle panel' },
   ]
-  const { theme: selectedThemeName } = storeToRefs(userPreferencesStore)
-
-  const themeLabel = computed(() => {
-    return themeOptions.find(option => option.value === selectedThemeName.value)?.title ?? 'Use device theme'
-  })
-
-  const themeIcon = computed(() => {
-    return themeOptions.find(option => option.value === selectedThemeName.value)?.icon ?? 'mdi-theme-light-dark'
-  })
-
-  function setTheme (themeName: ThemeName) {
-    userPreferencesStore.setTheme(themeName)
-  }
 </script>
 
 <style scoped>
