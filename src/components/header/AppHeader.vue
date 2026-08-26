@@ -4,11 +4,13 @@
     :elevation="0"
     height="56"
   >
-    <v-icon
-      color="primary"
-      icon="mdi-earth"
-      size="22"
-    />
+    <img
+      alt="Earth Engine Studio logo"
+      class="ml-2 mr-3"
+      height="32"
+      :src="appLogo"
+      width="32"
+    >
 
     <v-toolbar-title>Earth Engine Studio</v-toolbar-title>
 
@@ -19,5 +21,6 @@
 </template>
 
 <script lang="ts" setup>
+  import appLogo from '@/assets/logo.png'
   import AvatarMenu from './AvatarMenu.vue'
 </script>
