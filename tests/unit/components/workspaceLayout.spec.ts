@@ -43,6 +43,18 @@ describe('getWorkspaceGridLayout', () => {
     const layout = getWorkspaceGridLayout(defaultLayoutPreferences, 'desktop', false)
 
     expect(layout.areas).toBe('\'primary secondary\' \'panel panel\'')
-    expect(layout.columns).toBe('minmax(0, 1fr) minmax(0, 1fr)')
+    expect(layout.columns).toBe('minmax(160px, 280px) minmax(0, 1fr)')
+  })
+
+  it('uses persisted viewport dimensions for sidebar columns and the bottom panel row', () => {
+    const layout = getWorkspaceGridLayout({
+      ...defaultLayoutPreferences,
+      panelHeight: 320,
+      primarySidebarWidth: 360,
+      secondarySidebarWidth: 420,
+    }, 'desktop')
+
+    expect(layout.columns).toBe('minmax(160px, 360px) minmax(0, 1fr) minmax(160px, 420px)')
+    expect(layout.rows).toBe('minmax(0, 1fr) minmax(156px, 320px)')
   })
 })

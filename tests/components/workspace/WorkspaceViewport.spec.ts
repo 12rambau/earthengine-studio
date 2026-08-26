@@ -6,6 +6,41 @@ import { createVuetify } from 'vuetify'
 import WorkspaceViewport from '@/components/workspace/WorkspaceViewport.vue'
 import { useUserPreferencesStore } from '@/stores/userPreferences'
 
+function createRectangle (left: number, top: number, width: number, height: number) {
+  return {
+    bottom: top + height,
+    height,
+    left,
+    right: left + width,
+    toJSON: () => ({}),
+    top,
+    width,
+    x: left,
+    y: top,
+  } as DOMRect
+}
+
+function mockWorkspaceGeometry (workspaceViewport: HTMLElement) {
+  const geometry: Array<[Element, DOMRect]> = [
+    [workspaceViewport, createRectangle(0, 0, 1200, 800)],
+    [workspaceViewport.querySelector('.primary-sidebar')!, createRectangle(8, 8, 280, 608)],
+    [workspaceViewport.querySelector('.editor-pane')!, createRectangle(296, 8, 560, 608)],
+    [workspaceViewport.querySelector('.secondary-sidebar')!, createRectangle(864, 8, 328, 608)],
+    [workspaceViewport.querySelector('.bottom-panel')!, createRectangle(8, 624, 1184, 168)],
+  ]
+  const geometryMocks = geometry.map(([element, rectangle]) => {
+    return vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rectangle)
+  })
+
+  return {
+    mockRestore () {
+      for (const geometryMock of geometryMocks) {
+        geometryMock.mockRestore()
+      }
+    },
+  }
+}
+
 describe('WorkspaceViewport', () => {
   it('renders the four workspace regions', () => {
     const pinia = createPinia()
@@ -76,7 +111,7 @@ describe('WorkspaceViewport', () => {
     )
     expect(wrapper.find('[aria-label="Editor"]').exists()).toBe(false)
     expect(wrapper.element.style.getPropertyValue('--workspace-grid-areas')).toBe('\'primary secondary\' \'panel panel\'')
-    expect(wrapper.element.style.getPropertyValue('--workspace-grid-columns')).toBe('minmax(0, 1fr) minmax(0, 1fr)')
+    expect(wrapper.element.style.getPropertyValue('--workspace-grid-columns')).toBe('minmax(160px, 280px) minmax(0, 1fr)')
 
     window.dispatchEvent(new MessageEvent('message', {
       data: { panelId: 'editor', type: 'workspace-panel-attached' },
@@ -136,5 +171,48 @@ describe('WorkspaceViewport', () => {
     expect(wrapper.element.style.getPropertyValue('--workspace-grid-areas')).toBe('\'editor secondary\' \'panel panel\'')
 
     wrapper.unmount()
+  })
+
+  it('resizes both associated tracks from a gutter intersection and persists the dimensions', async () => {
+    const pinia = createPinia()
+    const wrapper = mount(WorkspaceViewport, {
+      global: {
+        plugins: [createVuetify(), pinia],
+      },
+    })
+    const userPreferencesStore = useUserPreferencesStore(pinia)
+    const geometryMock = mockWorkspaceGeometry(
+      wrapper.get('[aria-label="Workspace viewport"]').element as HTMLElement,
+    )
+
+    window.dispatchEvent(new Event('resize'))
+    await nextTick()
+
+    const cornerHandle = wrapper.get('[data-resize-handle="corner-primary-sidebar"]')
+
+    expect(cornerHandle.classes()).toContain('workspace-resize-handle-corner')
+
+    cornerHandle.element.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      button: 0,
+      clientX: 292,
+      clientY: 620,
+    }))
+    window.dispatchEvent(new MouseEvent('mousemove', { clientX: 352, clientY: 580 }))
+    await nextTick()
+
+    expect(wrapper.get('[data-resize-handle="vertical-primary-sidebar"]').classes()).toContain('is-resizing')
+    expect(wrapper.get('[data-resize-handle="horizontal-bottom-panel"]').classes()).toContain('is-resizing')
+    expect(wrapper.element.style.getPropertyValue('--workspace-grid-columns')).toContain('minmax(160px, 340px)')
+    expect(wrapper.element.style.getPropertyValue('--workspace-grid-rows')).toBe('minmax(0, 1fr) minmax(156px, 260px)')
+
+    window.dispatchEvent(new MouseEvent('mouseup'))
+    await nextTick()
+
+    expect(userPreferencesStore.layout.primarySidebarWidth).toBe(340)
+    expect(userPreferencesStore.layout.panelHeight).toBe(260)
+
+    wrapper.unmount()
+    geometryMock.mockRestore()
   })
 })

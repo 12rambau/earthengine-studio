@@ -2,6 +2,7 @@ import Cookies from 'js-cookie'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  clampWorkspacePanelSize,
   defaultLayoutPreferences,
   getUserPreferenceKey,
   isPanelAlignment,
@@ -14,6 +15,8 @@ import {
   serializeLayoutPreferences,
   themePreferenceKey,
   useUserPreferencesStore,
+  workspacePanelHeightRange,
+  workspaceSidebarWidthRange,
   writeUserPreference,
 } from '@/stores/userPreferences'
 
@@ -39,6 +42,13 @@ describe('user preferences store', () => {
 
   it('parses complete and valid layout preferences only', () => {
     expect(parseLayoutPreferences(serializeLayoutPreferences(defaultLayoutPreferences))).toEqual(defaultLayoutPreferences)
+    expect(parseLayoutPreferences(JSON.stringify({
+      panelAlignment: 'justify',
+      panelVisible: true,
+      primarySidebarPosition: 'left',
+      primarySidebarVisible: true,
+      secondarySidebarVisible: true,
+    }))).toEqual(defaultLayoutPreferences)
     expect(parseLayoutPreferences('{"panelVisible":true}')).toBeNull()
     expect(parseLayoutPreferences('{invalid json}')).toBeNull()
   })
@@ -50,6 +60,12 @@ describe('user preferences store', () => {
     expect(isPanelAlignment('left')).toBe(true)
     expect(isPanelAlignment('center')).toBe(true)
     expect(isPanelAlignment('stretch')).toBe(false)
+  })
+
+  it('bounds resizable panel dimensions', () => {
+    expect(clampWorkspacePanelSize(80, workspaceSidebarWidthRange)).toBe(160)
+    expect(clampWorkspacePanelSize(800, workspacePanelHeightRange)).toBe(720)
+    expect(clampWorkspacePanelSize(287.6, workspaceSidebarWidthRange)).toBe(288)
   })
 
   it('resolves the system preference from the device color scheme', () => {
@@ -123,13 +139,19 @@ describe('user preferences store', () => {
 
     userPreferencesStore.setPrimarySidebarPosition('right')
     userPreferencesStore.setPanelAlignment('left')
+    userPreferencesStore.setPanelHeight(320)
+    userPreferencesStore.setPrimarySidebarWidth(360)
+    userPreferencesStore.setSecondarySidebarWidth(420)
     userPreferencesStore.togglePanelVisibility()
 
     expect(userPreferencesStore.layout).toEqual({
       ...defaultLayoutPreferences,
       panelAlignment: 'left',
+      panelHeight: 320,
       panelVisible: false,
       primarySidebarPosition: 'right',
+      primarySidebarWidth: 360,
+      secondarySidebarWidth: 420,
     })
     expect(parseLayoutPreferences(Cookies.get(layoutPreferenceKey) ?? null)).toEqual(userPreferencesStore.layout)
   })

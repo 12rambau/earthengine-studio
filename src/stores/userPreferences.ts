@@ -6,12 +6,18 @@ export type ThemeName = 'system' | 'light' | 'dark'
 export type PrimarySidebarPosition = 'left' | 'right'
 export type PanelAlignment = 'left' | 'right' | 'center' | 'justify'
 
+export const workspacePanelHeightRange = { maximum: 720, minimum: 160 }
+export const workspaceSidebarWidthRange = { maximum: 720, minimum: 160 }
+
 export interface LayoutPreferences {
   panelAlignment: PanelAlignment
+  panelHeight: number
   panelVisible: boolean
   primarySidebarPosition: PrimarySidebarPosition
   primarySidebarVisible: boolean
+  primarySidebarWidth: number
   secondarySidebarVisible: boolean
+  secondarySidebarWidth: number
 }
 
 const userPreferenceCookiePrefix = 'earthengine-studio'
@@ -22,10 +28,13 @@ export const layoutPreferenceKey = getUserPreferenceKey('layout')
 
 export const defaultLayoutPreferences: LayoutPreferences = {
   panelAlignment: 'justify',
+  panelHeight: 220,
   panelVisible: true,
   primarySidebarPosition: 'left',
   primarySidebarVisible: true,
+  primarySidebarWidth: 280,
   secondarySidebarVisible: true,
+  secondarySidebarWidth: 320,
 }
 
 export const themeOptions: Array<{ icon: string, title: string, value: ThemeName }> = [
@@ -52,6 +61,23 @@ export function isPrimarySidebarPosition (
   return ['left', 'right'].includes(primarySidebarPosition ?? '')
 }
 
+export function clampWorkspacePanelSize (
+  size: number,
+  sizeRange: { maximum: number, minimum: number },
+) {
+  return Math.min(sizeRange.maximum, Math.max(sizeRange.minimum, Math.round(size)))
+}
+
+function isWorkspacePanelSize (
+  size: number | null | undefined,
+  sizeRange: { maximum: number, minimum: number },
+) {
+  return typeof size === 'number'
+    && Number.isFinite(size)
+    && size >= sizeRange.minimum
+    && size <= sizeRange.maximum
+}
+
 export function parseLayoutPreferences (value: string | null): LayoutPreferences | null {
   if (!value) {
     return null
@@ -65,10 +91,16 @@ export function parseLayoutPreferences (value: string | null): LayoutPreferences
     }
 
     const layout = layoutPreferences as Partial<LayoutPreferences>
+    const panelHeight = layout.panelHeight ?? defaultLayoutPreferences.panelHeight
+    const primarySidebarWidth = layout.primarySidebarWidth ?? defaultLayoutPreferences.primarySidebarWidth
+    const secondarySidebarWidth = layout.secondarySidebarWidth ?? defaultLayoutPreferences.secondarySidebarWidth
 
     if (
       !isPanelAlignment(layout.panelAlignment)
       || !isPrimarySidebarPosition(layout.primarySidebarPosition)
+      || !isWorkspacePanelSize(panelHeight, workspacePanelHeightRange)
+      || !isWorkspacePanelSize(primarySidebarWidth, workspaceSidebarWidthRange)
+      || !isWorkspacePanelSize(secondarySidebarWidth, workspaceSidebarWidthRange)
       || typeof layout.panelVisible !== 'boolean'
       || typeof layout.primarySidebarVisible !== 'boolean'
       || typeof layout.secondarySidebarVisible !== 'boolean'
@@ -78,10 +110,13 @@ export function parseLayoutPreferences (value: string | null): LayoutPreferences
 
     return {
       panelAlignment: layout.panelAlignment,
+      panelHeight,
       panelVisible: layout.panelVisible,
       primarySidebarPosition: layout.primarySidebarPosition,
       primarySidebarVisible: layout.primarySidebarVisible,
+      primarySidebarWidth,
       secondarySidebarVisible: layout.secondarySidebarVisible,
+      secondarySidebarWidth,
     }
   } catch {
     return null
@@ -185,6 +220,12 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     updateLayout({ panelAlignment })
   }
 
+  function setPanelHeight (panelHeight: number) {
+    updateLayout({
+      panelHeight: clampWorkspacePanelSize(panelHeight, workspacePanelHeightRange),
+    })
+  }
+
   function setPanelVisibility (panelVisible: boolean) {
     updateLayout({ panelVisible })
   }
@@ -197,8 +238,20 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     updateLayout({ primarySidebarVisible })
   }
 
+  function setPrimarySidebarWidth (primarySidebarWidth: number) {
+    updateLayout({
+      primarySidebarWidth: clampWorkspacePanelSize(primarySidebarWidth, workspaceSidebarWidthRange),
+    })
+  }
+
   function setSecondarySidebarVisibility (secondarySidebarVisible: boolean) {
     updateLayout({ secondarySidebarVisible })
+  }
+
+  function setSecondarySidebarWidth (secondarySidebarWidth: number) {
+    updateLayout({
+      secondarySidebarWidth: clampWorkspacePanelSize(secondarySidebarWidth, workspaceSidebarWidthRange),
+    })
   }
 
   function togglePanelVisibility () {
@@ -217,10 +270,13 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     initialize,
     layout,
     setPanelAlignment,
+    setPanelHeight,
     setPanelVisibility,
     setPrimarySidebarPosition,
     setPrimarySidebarVisibility,
+    setPrimarySidebarWidth,
     setSecondarySidebarVisibility,
+    setSecondarySidebarWidth,
     setTheme,
     theme,
     togglePanelVisibility,

@@ -12,12 +12,17 @@ export interface WorkspaceGridLayout {
   rows: string
 }
 
-function getSidebarWidth (sidebar: WorkspaceSidebar, gridSize: WorkspaceGridSize) {
-  if (gridSize === 'compact') {
-    return 'minmax(80px, 25%)'
-  }
+function getSidebarWidth (
+  sidebar: WorkspaceSidebar,
+  layoutPreferences: LayoutPreferences,
+  gridSize: WorkspaceGridSize,
+) {
+  const minimumWidth = gridSize === 'compact' ? 80 : 160
+  const preferredWidth = sidebar === 'primary'
+    ? layoutPreferences.primarySidebarWidth
+    : layoutPreferences.secondarySidebarWidth
 
-  return sidebar === 'primary' ? 'minmax(192px, 19vw)' : 'minmax(224px, 23vw)'
+  return `minmax(${minimumWidth}px, ${preferredWidth}px)`
 }
 
 function isSidebarVisible (sidebar: WorkspaceSidebar, layoutPreferences: LayoutPreferences) {
@@ -59,10 +64,14 @@ function getWorkspaceGridLayoutWithoutEditor (
 
   return {
     areas: gridRows.join(' '),
-    columns: visibleSidebars.map(() => 'minmax(0, 1fr)').join(' '),
+    columns: visibleSidebars.map((sidebar, index) => {
+      return index === visibleSidebars.length - 1
+        ? 'minmax(0, 1fr)'
+        : getSidebarWidth(sidebar, layoutPreferences, gridSize)
+    }).join(' '),
     rowGap: layoutPreferences.panelVisible ? '8px' : '0',
     rows: layoutPreferences.panelVisible
-      ? (gridSize === 'compact' ? 'minmax(0, 1fr) minmax(156px, 34%)' : 'minmax(0, 1fr) 220px')
+      ? `minmax(0, 1fr) minmax(156px, ${layoutPreferences.panelHeight}px)`
       : 'minmax(0, 1fr)',
   }
 }
@@ -118,11 +127,13 @@ export function getWorkspaceGridLayout (
   return {
     areas: gridRows.join(' '),
     columns: gridColumns.map(gridArea => {
-      return gridArea === 'editor' ? 'minmax(0, 1fr)' : getSidebarWidth(gridArea, gridSize)
+      return gridArea === 'editor'
+        ? 'minmax(0, 1fr)'
+        : getSidebarWidth(gridArea, layoutPreferences, gridSize)
     }).join(' '),
     rowGap: layoutPreferences.panelVisible ? '8px' : '0',
     rows: layoutPreferences.panelVisible
-      ? (gridSize === 'compact' ? 'minmax(0, 1fr) minmax(156px, 34%)' : 'minmax(0, 1fr) 220px')
+      ? `minmax(0, 1fr) minmax(156px, ${layoutPreferences.panelHeight}px)`
       : 'minmax(0, 1fr)',
   }
 }
