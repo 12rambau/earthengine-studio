@@ -73,17 +73,15 @@
 <script lang="ts" setup>
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
   import { useTheme } from 'vuetify'
-
-  type ThemeName = 'system' | 'light' | 'dark'
+  import {
+    isThemeName,
+    resolveThemeName,
+    type ThemeName,
+    themeOptions,
+    themePreferenceKey,
+  } from './theme'
 
   const theme = useTheme()
-  const themePreferenceKey = 'earthengine-studio.theme'
-
-  const themeOptions: Array<{ icon: string, title: string, value: ThemeName }> = [
-    { icon: 'mdi-theme-light-dark', title: 'Use device theme', value: 'system' },
-    { icon: 'mdi-weather-sunny', title: 'Light theme', value: 'light' },
-    { icon: 'mdi-weather-night', title: 'Dark theme', value: 'dark' },
-  ]
 
   const selectedThemeName = ref<ThemeName>('system')
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
@@ -103,21 +101,13 @@
   }
 
   function applyTheme () {
-    const themeName = selectedThemeName.value === 'system'
-      ? (deviceTheme.matches ? 'dark' : 'light')
-      : selectedThemeName.value
-
-    theme.change(themeName)
+    theme.change(resolveThemeName(selectedThemeName.value, deviceTheme.matches))
   }
 
   function handleDeviceThemeChange () {
     if (selectedThemeName.value === 'system') {
       applyTheme()
     }
-  }
-
-  function isThemeName (themeName: string | null): themeName is ThemeName {
-    return themeOptions.some(option => option.value === themeName)
   }
 
   onMounted(() => {
