@@ -2,10 +2,16 @@ import Cookies from 'js-cookie'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  defaultLayoutPreferences,
   getUserPreferenceKey,
+  isPanelAlignment,
+  isPrimarySidebarPosition,
   isThemeName,
+  layoutPreferenceKey,
+  parseLayoutPreferences,
   readUserPreference,
   resolveThemeName,
+  serializeLayoutPreferences,
   themePreferenceKey,
   useUserPreferencesStore,
   writeUserPreference,
@@ -17,6 +23,7 @@ function clearUserPreferenceCookie (preferenceName: string) {
 
 describe('user preferences store', () => {
   beforeEach(() => {
+    clearUserPreferenceCookie('layout')
     clearUserPreferenceCookie('theme')
     localStorage.clear()
     setActivePinia(createPinia())
@@ -28,6 +35,21 @@ describe('user preferences store', () => {
     expect(isThemeName('dark')).toBe(true)
     expect(isThemeName('contrast')).toBe(false)
     expect(isThemeName(null)).toBe(false)
+  })
+
+  it('parses complete and valid layout preferences only', () => {
+    expect(parseLayoutPreferences(serializeLayoutPreferences(defaultLayoutPreferences))).toEqual(defaultLayoutPreferences)
+    expect(parseLayoutPreferences('{"panelVisible":true}')).toBeNull()
+    expect(parseLayoutPreferences('{invalid json}')).toBeNull()
+  })
+
+  it('accepts the supported layout positions and alignments only', () => {
+    expect(isPrimarySidebarPosition('left')).toBe(true)
+    expect(isPrimarySidebarPosition('right')).toBe(true)
+    expect(isPrimarySidebarPosition('center')).toBe(false)
+    expect(isPanelAlignment('left')).toBe(true)
+    expect(isPanelAlignment('center')).toBe(true)
+    expect(isPanelAlignment('stretch')).toBe(false)
   })
 
   it('resolves the system preference from the device color scheme', () => {
@@ -61,6 +83,21 @@ describe('user preferences store', () => {
     expect(userPreferencesStore.theme).toBe('light')
   })
 
+  it('restores the layout preferences from the cookie', () => {
+    const savedLayout = {
+      ...defaultLayoutPreferences,
+      panelAlignment: 'center' as const,
+      primarySidebarPosition: 'right' as const,
+      secondarySidebarVisible: false,
+    }
+    writeUserPreference('layout', serializeLayoutPreferences(savedLayout))
+    const userPreferencesStore = useUserPreferencesStore()
+
+    userPreferencesStore.initialize()
+
+    expect(userPreferencesStore.layout).toEqual(savedLayout)
+  })
+
   it('migrates the existing local theme preference to a cookie', () => {
     localStorage.setItem(themePreferenceKey, 'dark')
     const userPreferencesStore = useUserPreferencesStore()
@@ -79,5 +116,21 @@ describe('user preferences store', () => {
 
     expect(userPreferencesStore.theme).toBe('dark')
     expect(readUserPreference('theme', isThemeName)).toBe('dark')
+  })
+
+  it('persists layout updates in a cookie', () => {
+    const userPreferencesStore = useUserPreferencesStore()
+
+    userPreferencesStore.setPrimarySidebarPosition('right')
+    userPreferencesStore.setPanelAlignment('left')
+    userPreferencesStore.togglePanelVisibility()
+
+    expect(userPreferencesStore.layout).toEqual({
+      ...defaultLayoutPreferences,
+      panelAlignment: 'left',
+      panelVisible: false,
+      primarySidebarPosition: 'right',
+    })
+    expect(parseLayoutPreferences(Cookies.get(layoutPreferenceKey) ?? null)).toEqual(userPreferencesStore.layout)
   })
 })

@@ -66,6 +66,8 @@
           </v-list-item>
         </v-list>
       </v-menu>
+
+      <layout-customization-menu />
     </v-list>
   </v-menu>
 </template>
@@ -80,6 +82,7 @@
     themeOptions,
     useUserPreferencesStore,
   } from '@/stores/userPreferences'
+  import LayoutCustomizationMenu from './LayoutCustomizationMenu.vue'
 
   const theme = useTheme()
   const userPreferencesStore = useUserPreferencesStore()

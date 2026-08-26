@@ -3,11 +3,30 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export type ThemeName = 'system' | 'light' | 'dark'
+export type PrimarySidebarPosition = 'left' | 'right'
+export type PanelAlignment = 'left' | 'right' | 'center' | 'justify'
+
+export interface LayoutPreferences {
+  panelAlignment: PanelAlignment
+  panelVisible: boolean
+  primarySidebarPosition: PrimarySidebarPosition
+  primarySidebarVisible: boolean
+  secondarySidebarVisible: boolean
+}
 
 const userPreferenceCookiePrefix = 'earthengine-studio'
 const userPreferenceCookieDuration = 365
 
 export const themePreferenceKey = getUserPreferenceKey('theme')
+export const layoutPreferenceKey = getUserPreferenceKey('layout')
+
+export const defaultLayoutPreferences: LayoutPreferences = {
+  panelAlignment: 'justify',
+  panelVisible: true,
+  primarySidebarPosition: 'left',
+  primarySidebarVisible: true,
+  secondarySidebarVisible: true,
+}
 
 export const themeOptions: Array<{ icon: string, title: string, value: ThemeName }> = [
   { icon: 'mdi-theme-light-dark', title: 'Use device theme', value: 'system' },
@@ -23,12 +42,66 @@ export function isThemeName (themeName: string | null): themeName is ThemeName {
   return themeOptions.some(option => option.value === themeName)
 }
 
+export function isPanelAlignment (panelAlignment: string | null | undefined): panelAlignment is PanelAlignment {
+  return ['left', 'right', 'center', 'justify'].includes(panelAlignment ?? '')
+}
+
+export function isPrimarySidebarPosition (
+  primarySidebarPosition: string | null | undefined,
+): primarySidebarPosition is PrimarySidebarPosition {
+  return ['left', 'right'].includes(primarySidebarPosition ?? '')
+}
+
+export function parseLayoutPreferences (value: string | null): LayoutPreferences | null {
+  if (!value) {
+    return null
+  }
+
+  try {
+    const layoutPreferences: unknown = JSON.parse(value)
+
+    if (!layoutPreferences || typeof layoutPreferences !== 'object') {
+      return null
+    }
+
+    const layout = layoutPreferences as Partial<LayoutPreferences>
+
+    if (
+      !isPanelAlignment(layout.panelAlignment)
+      || !isPrimarySidebarPosition(layout.primarySidebarPosition)
+      || typeof layout.panelVisible !== 'boolean'
+      || typeof layout.primarySidebarVisible !== 'boolean'
+      || typeof layout.secondarySidebarVisible !== 'boolean'
+    ) {
+      return null
+    }
+
+    return {
+      panelAlignment: layout.panelAlignment,
+      panelVisible: layout.panelVisible,
+      primarySidebarPosition: layout.primarySidebarPosition,
+      primarySidebarVisible: layout.primarySidebarVisible,
+      secondarySidebarVisible: layout.secondarySidebarVisible,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function serializeLayoutPreferences (layoutPreferences: LayoutPreferences) {
+  return JSON.stringify(layoutPreferences)
+}
+
 export function resolveThemeName (themeName: ThemeName, prefersDark: boolean): 'light' | 'dark' {
   if (themeName === 'system') {
     return prefersDark ? 'dark' : 'light'
   }
 
   return themeName
+}
+
+function isSerializedLayoutPreferences (value: string | null): value is string {
+  return parseLayoutPreferences(value) !== null
 }
 
 export function readUserPreference<T extends string> (
@@ -81,12 +154,20 @@ function restoreUserPreference<T extends string> (
 
 export const useUserPreferencesStore = defineStore('user-preferences', () => {
   const theme = ref<ThemeName>('system')
+  const layout = ref<LayoutPreferences>({ ...defaultLayoutPreferences })
 
   function initialize () {
     const savedThemeName = restoreUserPreference('theme', isThemeName)
+    const savedLayoutPreferences = restoreUserPreference('layout', isSerializedLayoutPreferences)
 
     if (savedThemeName) {
       theme.value = savedThemeName
+    }
+
+    const parsedLayoutPreferences = parseLayoutPreferences(savedLayoutPreferences)
+
+    if (parsedLayoutPreferences) {
+      layout.value = parsedLayoutPreferences
     }
   }
 
@@ -95,9 +176,55 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     writeUserPreference('theme', themeName)
   }
 
+  function updateLayout (layoutUpdate: Partial<LayoutPreferences>) {
+    layout.value = { ...layout.value, ...layoutUpdate }
+    writeUserPreference('layout', serializeLayoutPreferences(layout.value))
+  }
+
+  function setPanelAlignment (panelAlignment: PanelAlignment) {
+    updateLayout({ panelAlignment })
+  }
+
+  function setPanelVisibility (panelVisible: boolean) {
+    updateLayout({ panelVisible })
+  }
+
+  function setPrimarySidebarPosition (primarySidebarPosition: PrimarySidebarPosition) {
+    updateLayout({ primarySidebarPosition })
+  }
+
+  function setPrimarySidebarVisibility (primarySidebarVisible: boolean) {
+    updateLayout({ primarySidebarVisible })
+  }
+
+  function setSecondarySidebarVisibility (secondarySidebarVisible: boolean) {
+    updateLayout({ secondarySidebarVisible })
+  }
+
+  function togglePanelVisibility () {
+    setPanelVisibility(!layout.value.panelVisible)
+  }
+
+  function togglePrimarySidebarVisibility () {
+    setPrimarySidebarVisibility(!layout.value.primarySidebarVisible)
+  }
+
+  function toggleSecondarySidebarVisibility () {
+    setSecondarySidebarVisibility(!layout.value.secondarySidebarVisible)
+  }
+
   return {
     initialize,
+    layout,
+    setPanelAlignment,
+    setPanelVisibility,
+    setPrimarySidebarPosition,
+    setPrimarySidebarVisibility,
+    setSecondarySidebarVisibility,
     setTheme,
     theme,
+    togglePanelVisibility,
+    togglePrimarySidebarVisibility,
+    toggleSecondarySidebarVisibility,
   }
 })

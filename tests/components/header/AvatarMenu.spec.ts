@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import Cookies from 'js-cookie'
 import { createPinia } from 'pinia'
 import { describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { createVuetify } from 'vuetify'
 import AvatarMenu from '@/components/header/AvatarMenu.vue'
 import { themePreferenceKey } from '@/stores/userPreferences'
@@ -37,6 +38,17 @@ describe('AvatarMenu', () => {
     const { changeTheme, wrapper } = mountAvatarMenu()
 
     expect(changeTheme).toHaveBeenCalledWith('dark')
+
+    wrapper.unmount()
+  })
+
+  it('offers layout customization in the user menu', async () => {
+    const { wrapper } = mountAvatarMenu()
+
+    await wrapper.get('button[aria-label="Open user menu"]').trigger('click')
+    await nextTick()
+
+    expect(document.body.querySelector('[aria-label="Customize layout"]')).not.toBeNull()
 
     wrapper.unmount()
   })
