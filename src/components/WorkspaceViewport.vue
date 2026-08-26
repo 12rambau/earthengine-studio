@@ -577,7 +577,7 @@
   .workspace-viewport {
     --workspace-border: rgba(var(--v-theme-on-surface), 0.14);
 
-    background: rgb(var(--v-theme-background));
+    background: rgb(var(--v-theme-workspace-background));
     block-size: 100%;
     box-sizing: border-box;
     display: grid;
@@ -587,7 +587,7 @@
     grid-template-rows: var(--workspace-grid-rows);
     min-block-size: 0;
     overflow: hidden;
-    padding: 8px;
+    padding: 0 8px 8px;
     position: relative;
     row-gap: var(--workspace-grid-row-gap);
   }
@@ -650,7 +650,6 @@
   }
 
   .editor-pane {
-    background: rgb(var(--v-theme-background));
     grid-area: editor;
   }
 

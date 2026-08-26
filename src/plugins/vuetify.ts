@@ -29,5 +29,17 @@ export default createVuetify({
   },
   theme: {
     defaultTheme: 'system',
+    themes: {
+      light: {
+        colors: {
+          'workspace-background': '#edf3ff',
+        },
+      },
+      dark: {
+        colors: {
+          'workspace-background': '#202124',
+        },
+      },
+    },
   },
 })

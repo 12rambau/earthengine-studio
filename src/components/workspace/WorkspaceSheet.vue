@@ -65,7 +65,7 @@
 
 <style scoped>
   .workspace-sheet {
-    background: rgb(var(--v-theme-surface));
+    background: rgb(var(--v-theme-background));
     border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
     border-radius: 8px;
     display: grid;

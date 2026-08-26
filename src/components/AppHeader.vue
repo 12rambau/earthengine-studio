@@ -1,6 +1,6 @@
 <template>
   <v-app-bar
-    border
+    color="workspace-background"
     density="compact"
     :elevation="0"
     height="48"
