@@ -52,4 +52,23 @@ describe('AvatarMenu', () => {
 
     wrapper.unmount()
   })
+
+  it('opens a dialog listing the available keyboard shortcuts', async () => {
+    const { wrapper } = mountAvatarMenu()
+
+    await wrapper.get('button[aria-label="Open user menu"]').trigger('click')
+    await nextTick()
+    document.body.querySelector<HTMLElement>('[aria-label="Open keyboard shortcuts"]')?.click()
+    await nextTick()
+
+    const dialog = document.body.querySelector('[aria-label="Keyboard shortcuts dialog"]')
+
+    expect(dialog?.textContent).toContain('Toggle primary sidebar')
+    expect(dialog?.textContent).toContain('Toggle secondary sidebar')
+    expect(dialog?.textContent).toContain('Toggle panel')
+    expect(dialog?.textContent).toContain('Ctrl')
+    expect(dialog?.textContent).toContain('Alt')
+
+    wrapper.unmount()
+  })
 })
