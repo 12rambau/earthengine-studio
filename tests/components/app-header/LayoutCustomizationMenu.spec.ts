@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { createVuetify } from 'vuetify'
-import LayoutCustomizationMenu from '@/components/header/LayoutCustomizationMenu.vue'
+import LayoutCustomizationMenu from '@/components/app-header/LayoutCustomizationMenu.vue'
 import { useUserPreferencesStore } from '@/stores/userPreferences'
 
 describe('LayoutCustomizationMenu', () => {

@@ -14,9 +14,9 @@
 <script lang="ts" setup>
   import { onBeforeUnmount, onMounted, watch } from 'vue'
   import { useTheme } from 'vuetify'
-  import AppHeader from '@/components/header/AppHeader.vue'
+  import AppHeader from '@/components/AppHeader.vue'
   import { getWorkspacePanelId } from '@/components/workspace/workspacePanel'
-  import WorkspaceViewport from '@/components/workspace/WorkspaceViewport.vue'
+  import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
   import { resolveThemeName, useUserPreferencesStore } from '@/stores/userPreferences'
 
   const theme = useTheme()

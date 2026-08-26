@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import { describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { createVuetify } from 'vuetify'
-import AvatarMenu from '@/components/header/AvatarMenu.vue'
+import AvatarMenu from '@/components/app-header/AvatarMenu.vue'
 
 function mountAvatarMenu () {
   const vuetify = createVuetify({
@@ -24,8 +24,12 @@ function mountAvatarMenu () {
 describe('AvatarMenu', () => {
   it('renders an accessible user menu activator', () => {
     const { wrapper } = mountAvatarMenu()
+    const activator = wrapper.get('button[aria-label="Open user menu"]')
+    const avatar = wrapper.get('.v-avatar')
 
-    expect(wrapper.get('button[aria-label="Open user menu"]').exists()).toBe(true)
+    expect(activator.classes()).toContain('v-btn--density-compact')
+    expect(avatar.attributes('style')).toContain('height: 24px')
+    expect(avatar.attributes('style')).toContain('width: 24px')
 
     wrapper.unmount()
   })

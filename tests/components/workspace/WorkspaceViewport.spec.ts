@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import { describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createVuetify } from 'vuetify'
-import WorkspaceViewport from '@/components/workspace/WorkspaceViewport.vue'
+import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
 import { useUserPreferencesStore } from '@/stores/userPreferences'
 
 function createRectangle (left: number, top: number, width: number, height: number) {

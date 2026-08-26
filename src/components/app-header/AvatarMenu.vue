@@ -7,12 +7,13 @@
       <v-btn
         v-bind="props"
         aria-label="Open user menu"
+        density="compact"
         icon
         variant="text"
       >
         <v-avatar
           color="primary"
-          size="32"
+          size="24"
           variant="tonal"
         >
           <v-icon icon="mdi-account" />

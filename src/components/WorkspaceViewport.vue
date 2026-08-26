@@ -62,7 +62,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { WorkspacePanelId } from './workspacePanel'
+  import type { WorkspacePanelId } from './workspace/workspacePanel'
   import { storeToRefs } from 'pinia'
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import {
@@ -72,11 +72,11 @@
     workspacePanelHeightRange,
     workspaceSidebarWidthRange,
   } from '@/stores/userPreferences'
-  import BottomPanel from './BottomPanel.vue'
-  import EditorPane from './EditorPane.vue'
-  import PrimarySidebar from './PrimarySidebar.vue'
-  import SecondarySidebar from './SecondarySidebar.vue'
-  import { getWorkspaceGridLayout } from './workspaceLayout'
+  import BottomPanel from './workspace/BottomPanel.vue'
+  import EditorPane from './workspace/EditorPane.vue'
+  import PrimarySidebar from './workspace/PrimarySidebar.vue'
+  import SecondarySidebar from './workspace/SecondarySidebar.vue'
+  import { getWorkspaceGridLayout } from './workspace/workspaceLayout'
 
   type WorkspaceSidebarPanelId = 'primary-sidebar' | 'secondary-sidebar'
   type WorkspaceResizeOrientation = 'corner' | 'horizontal' | 'vertical'
