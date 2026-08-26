@@ -24,8 +24,9 @@
 
     <v-list
       aria-label="User menu"
-      density="comfortable"
+      density="compact"
       min-width="224"
+      nav
     >
       <theme-selector-dialog />
 
