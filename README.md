@@ -1,92 +1,55 @@
-# earthengine-studio
+# Earth Engine Studio
 
-Scaffolded with Vuetify CLI.
+Earth Engine Studio is a work-in-progress web application for shaping a focused workspace around Google Earth Engine workflows.
 
-## ❗️ Documentation
+The project is at an early stage. The current application provides the frontend foundation, including the application shell and theme preferences. Mapping, data exploration, and Earth Engine integrations are still under active development.
 
-- Primary docs: https://vuetifyjs.com/
-- Getting started guide: https://vuetifyjs.com/en/getting-started/installation/
-- Community support: https://community.vuetifyjs.com/
-- Issue tracker: https://issues.vuetifyjs.com/
+## Stack
 
-## 🧱 Stack
+- Vue 3, TypeScript, and Vite
+- Vuetify and UnoCSS
+- Pinia and Vue I18n
+- Vitest and Vue Test Utils
 
-- Framework: Vue 3 + Vite
-- UI Library: Vuetify
-- Language: TypeScript
-- Package manager: npm
+## Getting Started
 
-## 🧭 Start Here
-
-- Main entry: `src/main.ts`
-- Main app component: `src/App.vue`
-- Main styles: `src/styles/`
-- Plugin setup: `src/plugins/`
-
-## 📁 Project Structure
-
-- `src/main.ts` — application entry point
-- `src/App.vue` — root component
-- `src/components/` — reusable Vue components
-- `src/plugins/` — plugin registration and setup
-- `src/styles/` — global styles and theme settings
-- `public/` — static public files
-
-## ✨ Enabled Features
-
-- ESLint
-- Vuetify MCP
-- Pinia
-- Vue I18n
-- UnoCSS + Vuetify Preset
-
-## 💿 Install
-
-Use your selected package manager (npm) to install dependencies:
+Use a current Node.js 24 release and npm.
 
 ```bash
-npm install
-```
-
-## 🚀 Quick Start
-
-```bash
-npm install
+npm ci
 npm run dev
 ```
 
-## 🏗️ Build
+The development server runs at `http://localhost:3000` by default.
+
+## Quality Checks
 
 ```bash
+npm run lint
+npm test
+npm run test:coverage
 npm run build
 ```
 
-## 🧪 Available Scripts
+`npm run test:coverage` writes HTML, JSON, and LCOV reports to `coverage/`.
 
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-- `npm run build-only`
-- `npm run type-check`
-- `npm run lint`
-- `npm run lint:fix`
+## Project Structure
 
-## 🤖 Vuetify MCP Server
-
-This project is configured with the Vuetify Model Context Protocol (MCP) server.
-To install and configure the MCP server for your favorite IDE (Cursor, Trae, Windsurf, VS Code, Claude Desktop, etc.) run:
-
-```bash
-npx -y @vuetify/mcp-cli
+```text
+src/
+	components/    Vue components grouped by feature
+	plugins/       Vuetify, Pinia, and i18n configuration
+	stores/        Pinia stores
+	styles/        Global style settings
+tests/
+	unit/          Unit tests for isolated behavior
+	components/    Vue component tests
 ```
 
-This will open an interactive setup wizard to help you connect your AI assistant to the Vuetify ecosystem.
+## Contributing
 
-## 💪 Support Vuetify Development
+Issues and pull requests are welcome while the project takes shape. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md), include relevant unit and component tests, and ensure the quality checks pass before opening a pull request.
 
-This project uses Vuetify - an MIT licensed Open Source project. We are glad to welcome contributors and any support for ongoing development:
+## License
 
-- Contribute to Vuetify and ecosystem projects: https://github.com/vuetifyjs
-- Request enterprise support: https://support.vuetifyjs.com/
-- Sponsor on GitHub: https://github.com/sponsors/vuetifyjs
-- Support on Open Collective: https://opencollective.com/vuetify
+Earth Engine Studio is licensed under the [Apache License 2.0](LICENSE).
