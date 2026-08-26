@@ -129,17 +129,14 @@
 
 <script lang="ts" setup>
   import { storeToRefs } from 'pinia'
-  import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-  import { useTheme } from 'vuetify'
+  import { computed, ref } from 'vue'
   import {
-    resolveThemeName,
     type ThemeName,
     themeOptions,
     useUserPreferencesStore,
   } from '@/stores/userPreferences'
   import LayoutCustomizationMenu from './LayoutCustomizationMenu.vue'
 
-  const theme = useTheme()
   const userPreferencesStore = useUserPreferencesStore()
 
   const isKeyboardShortcutsDialogOpen = ref(false)
@@ -149,7 +146,6 @@
     { icon: 'mdi-dock-bottom', keys: ['Ctrl', 'J'], title: 'Toggle panel' },
   ]
   const { theme: selectedThemeName } = storeToRefs(userPreferencesStore)
-  const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
   const themeLabel = computed(() => {
     return themeOptions.find(option => option.value === selectedThemeName.value)?.title ?? 'Use device theme'
@@ -161,28 +157,7 @@
 
   function setTheme (themeName: ThemeName) {
     userPreferencesStore.setTheme(themeName)
-    applyTheme()
   }
-
-  function applyTheme () {
-    theme.change(resolveThemeName(selectedThemeName.value, deviceTheme.matches))
-  }
-
-  function handleDeviceThemeChange () {
-    if (selectedThemeName.value === 'system') {
-      applyTheme()
-    }
-  }
-
-  onMounted(() => {
-    userPreferencesStore.initialize()
-    deviceTheme.addEventListener('change', handleDeviceThemeChange)
-    applyTheme()
-  })
-
-  onBeforeUnmount(() => {
-    deviceTheme.removeEventListener('change', handleDeviceThemeChange)
-  })
 </script>
 
 <style scoped>

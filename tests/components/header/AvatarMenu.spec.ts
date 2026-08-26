@@ -1,11 +1,9 @@
 import { mount } from '@vue/test-utils'
-import Cookies from 'js-cookie'
 import { createPinia } from 'pinia'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import { createVuetify } from 'vuetify'
 import AvatarMenu from '@/components/header/AvatarMenu.vue'
-import { themePreferenceKey } from '@/stores/userPreferences'
 
 function mountAvatarMenu () {
   const vuetify = createVuetify({
@@ -13,7 +11,6 @@ function mountAvatarMenu () {
       defaultTheme: 'light',
     },
   })
-  const changeTheme = vi.spyOn(vuetify.theme, 'change')
   const wrapper = mount(AvatarMenu, {
     attachTo: document.body,
     global: {
@@ -21,7 +18,7 @@ function mountAvatarMenu () {
     },
   })
 
-  return { changeTheme, wrapper }
+  return { wrapper }
 }
 
 describe('AvatarMenu', () => {
@@ -29,15 +26,6 @@ describe('AvatarMenu', () => {
     const { wrapper } = mountAvatarMenu()
 
     expect(wrapper.get('button[aria-label="Open user menu"]').exists()).toBe(true)
-
-    wrapper.unmount()
-  })
-
-  it('applies the saved theme preference on mount', () => {
-    Cookies.set(themePreferenceKey, 'dark', { path: '/' })
-    const { changeTheme, wrapper } = mountAvatarMenu()
-
-    expect(changeTheme).toHaveBeenCalledWith('dark')
 
     wrapper.unmount()
   })

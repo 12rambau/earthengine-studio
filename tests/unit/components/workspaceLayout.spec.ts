@@ -38,4 +38,11 @@ describe('getWorkspaceGridLayout', () => {
 
     expect(layout.areas).toBe('\'primary editor secondary\' \'panel panel panel\'')
   })
+
+  it('redistributes the workspace to attached panels when the editor is detached', () => {
+    const layout = getWorkspaceGridLayout(defaultLayoutPreferences, 'desktop', false)
+
+    expect(layout.areas).toBe('\'primary secondary\' \'panel panel\'')
+    expect(layout.columns).toBe('minmax(0, 1fr) minmax(0, 1fr)')
+  })
 })
