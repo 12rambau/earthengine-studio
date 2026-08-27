@@ -8,7 +8,9 @@
     tag="section"
   >
     <header class="d-flex align-center mx-1">
-      <span class="text-medium-emphasis">{{ title }}</span>
+      <slot name="header">
+        <span class="text-medium-emphasis">{{ title }}</span>
+      </slot>
 
       <v-spacer />
 
@@ -36,9 +38,7 @@
       />
     </header>
 
-    <div class="workspace-sheet-content">
-      <slot />
-    </div>
+    <slot />
   </v-sheet>
 </template>
 
