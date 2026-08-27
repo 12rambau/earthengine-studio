@@ -38,7 +38,9 @@
       />
     </header>
 
-    <slot />
+    <div class="workspace-sheet-content">
+      <slot />
+    </div>
   </v-sheet>
 </template>
 
@@ -73,5 +75,10 @@
   .workspace-sheet {
     display: grid;
     grid-template-rows: min-content minmax(0, 1fr);
+  }
+
+  .workspace-sheet-content {
+    min-block-size: 0;
+    overflow: auto;
   }
 </style>
