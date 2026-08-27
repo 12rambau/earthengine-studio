@@ -1,11 +1,9 @@
 <template>
   <workspace-sheet
-    class="workspace-pane primary-sidebar"
-    :is-detached="isDetached"
+    class="workspace-pane secondary-sidebar"
     :is-fullscreen="isFullscreen"
-    title="Primary sidebar"
+    title="Secondary sidebar"
     @close="emit('close')"
-    @open-in-new-window="emit('open-in-new-window')"
     @toggle-fullscreen="emit('toggle-fullscreen')"
   />
 </template>
@@ -14,13 +12,11 @@
   import WorkspaceSheet from './WorkspaceSheet.vue'
 
   defineProps<{
-    isDetached?: boolean
     isFullscreen: boolean
   }>()
 
   const emit = defineEmits<{
     'close': []
-    'open-in-new-window': []
     'toggle-fullscreen': []
   }>()
 </script>

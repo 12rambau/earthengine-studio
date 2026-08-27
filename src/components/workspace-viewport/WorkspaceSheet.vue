@@ -9,27 +9,16 @@
 
       <div class="workspace-sheet-actions">
         <v-btn
-          v-if="!isDetached"
           :aria-label="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
           density="compact"
-          :icon="isFullscreen ? 'mdi-arrow-collapse-all' : 'mdi-arrow-expand-all'"
+          :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
           :title="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
           variant="text"
           @click="emit('toggle-fullscreen')"
         />
 
         <v-btn
-          v-if="!isDetached"
-          :aria-label="`Open ${title} in new window`"
-          density="compact"
-          icon="mdi-open-in-new"
-          :title="`Open ${title} in new window`"
-          variant="text"
-          @click="emit('open-in-new-window')"
-        />
-
-        <v-btn
-          v-if="isClosable !== false && !isDetached"
+          v-if="isClosable !== false"
           :aria-label="`Hide ${title}`"
           density="compact"
           icon="mdi-close"
@@ -48,7 +37,6 @@
 
 <script lang="ts" setup>
   withDefaults(defineProps<{
-    isDetached?: boolean
     isClosable?: boolean
     isFullscreen: boolean
     title: string
@@ -58,7 +46,6 @@
 
   const emit = defineEmits<{
     'close': []
-    'open-in-new-window': []
     'toggle-fullscreen': []
   }>()
 </script>

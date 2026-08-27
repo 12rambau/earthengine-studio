@@ -1,12 +1,12 @@
 <template>
   <v-app>
-    <app-header v-if="!popoutPanel" />
+    <app-header />
 
     <v-main
       aria-label="Workspace canvas"
       class="workspace-main"
     >
-      <workspace-viewport :popout-panel="popoutPanel" />
+      <workspace-viewport />
     </v-main>
   </v-app>
 </template>
@@ -15,13 +15,11 @@
   import { onBeforeUnmount, onMounted, watch } from 'vue'
   import { useTheme } from 'vuetify'
   import AppHeader from '@/components/AppHeader.vue'
-  import { getWorkspacePanelId } from '@/components/workspace/workspacePanel'
   import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
   import { resolveThemeName, useUserPreferencesStore } from '@/stores/userPreferences'
 
   const theme = useTheme()
   const userPreferencesStore = useUserPreferencesStore()
-  const popoutPanel = getWorkspacePanelId(new URLSearchParams(window.location.search).get('panel'))
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
   function handleLayoutShortcut (event: KeyboardEvent) {

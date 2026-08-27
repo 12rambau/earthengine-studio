@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getWorkspaceGridLayout } from '@/components/workspace/workspaceLayout'
+import { getWorkspaceGridLayout } from '@/components/workspace-viewport/workspaceLayout'
 import { defaultLayoutPreferences } from '@/stores/userPreferences'
 
 describe('getWorkspaceGridLayout', () => {
