@@ -1,10 +1,52 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   buildCommunityThemes,
   type CommunityDataset,
   getCatalogAssetPresentation,
   getDatasetCatalogUrl,
+  preloadCatalog,
 } from '@/components/workspace-viewport/primary-sidebar/catalog'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('preloadCatalog', () => {
+  it('warms the public root, provider collections, asset types, and community manifest', async () => {
+    const fetchCatalog = vi.fn((url: string) => {
+      const payloads: Record<string, unknown> = {
+        'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json': {
+          links: [{ href: 'https://catalog.test/provider.json', rel: 'child', title: 'Provider' }],
+        },
+        'https://catalog.test/collection.json': {
+          'gee:type': 'image',
+          'links': [],
+        },
+        'https://catalog.test/provider.json': {
+          links: [{ href: 'https://catalog.test/collection.json', rel: 'child', title: 'Collection' }],
+        },
+        'https://raw.githubusercontent.com/samapriya/awesome-gee-community-datasets/master/community_datasets.json': [],
+      }
+
+      return Promise.resolve({
+        json: () => Promise.resolve(payloads[url]),
+        ok: true,
+      })
+    })
+
+    vi.stubGlobal('fetch', fetchCatalog)
+
+    await preloadCatalog()
+
+    expect(fetchCatalog).toHaveBeenCalledTimes(4)
+    expect(fetchCatalog.mock.calls.map(([url]) => url)).toEqual(expect.arrayContaining([
+      'https://earthengine-stac.storage.googleapis.com/catalog/catalog.json',
+      'https://catalog.test/provider.json',
+      'https://catalog.test/collection.json',
+      'https://raw.githubusercontent.com/samapriya/awesome-gee-community-datasets/master/community_datasets.json',
+    ]))
+  })
+})
 
 describe('buildCommunityThemes', () => {
   it('groups datasets by theme and keeps one entry for each documentation page', () => {

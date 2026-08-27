@@ -1,5 +1,12 @@
 <template>
   <v-app>
+    <transition name="startup-screen">
+      <startup-screen
+        v-if="isStarting"
+        :is-dark="isDark"
+      />
+    </transition>
+
     <app-header />
 
     <v-main
@@ -12,15 +19,23 @@
 </template>
 
 <script lang="ts" setup>
-  import { onBeforeUnmount, onMounted, watch } from 'vue'
+  import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import { useTheme } from 'vuetify'
+  import StartupScreen from '@/components/app/StartupScreen.vue'
   import AppHeader from '@/components/AppHeader.vue'
+  import { preloadCatalog } from '@/components/workspace-viewport/primary-sidebar/catalog'
   import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
   import { resolveThemeName, useUserPreferencesStore } from '@/stores/userPreferences'
 
   const theme = useTheme()
   const userPreferencesStore = useUserPreferencesStore()
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+  /** Keeps the launch screen visible while essential public workspace data is fetched. */
+  const isStarting = ref(true)
+
+  /** Reflects the resolved Vuetify theme so the launch scene matches the application. */
+  const isDark = computed(() => theme.global.name.value === 'dark')
 
   function handleLayoutShortcut (event: KeyboardEvent) {
     if (event.defaultPrevented || event.metaKey || event.repeat || !event.ctrlKey || event.shiftKey) {
@@ -61,9 +76,15 @@
   userPreferencesStore.initialize()
   watch(() => userPreferencesStore.theme, applyTheme, { immediate: true })
 
-  onMounted(() => {
+  onMounted(async () => {
     deviceTheme.addEventListener('change', handleDeviceThemeChange)
     window.addEventListener('keydown', handleLayoutShortcut, true)
+
+    await Promise.allSettled([
+      preloadCatalog(),
+      new Promise<void>(resolve => window.setTimeout(resolve, 700)),
+    ])
+    isStarting.value = false
   })
 
   onBeforeUnmount(() => {
@@ -76,5 +97,13 @@
   .workspace-main {
     block-size: 100dvh;
     overflow: hidden;
+  }
+
+  .startup-screen-leave-active {
+    transition: opacity 280ms ease-in;
+  }
+
+  .startup-screen-leave-to {
+    opacity: 0;
   }
 </style>

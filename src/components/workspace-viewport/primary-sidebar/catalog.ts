@@ -130,6 +130,26 @@ export function fetchCommunityDatasets () {
 }
 
 /**
+ * Warms the public catalog requests needed by the tree without allowing a failed branch to delay application startup.
+ */
+export async function preloadCatalog () {
+  const [providersResult] = await Promise.allSettled([
+    fetchCatalogEntries(catalogUrl),
+    fetchCommunityDatasets(),
+  ])
+
+  if (providersResult.status !== 'fulfilled') {
+    return
+  }
+
+  await Promise.allSettled(providersResult.value.map(async provider => {
+    const collections = await fetchCatalogEntries(provider.href)
+
+    await Promise.allSettled(collections.map(collection => fetchCatalogAssetType(collection.href)))
+  }))
+}
+
+/**
  * Groups community datasets by theme and keeps one entry for each external documentation page.
  */
 export function buildCommunityThemes (datasets: CommunityDataset[]) {
