@@ -1,96 +1,77 @@
 <template>
-  <section
+  <v-sheet
     :aria-label="title"
     class="workspace-sheet"
     :class="{ 'is-fullscreen': isFullscreen }"
+    color="background"
+    rounded="lg"
+    tag="section"
   >
-    <header class="workspace-sheet-header">
-      <h2>{{ title }}</h2>
+    <header class="d-flex align-center mx-1">
+      <span class="text-medium-emphasis">{{ title }}</span>
 
-      <div class="workspace-sheet-actions">
-        <v-btn
-          :aria-label="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
-          density="compact"
-          :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
-          :title="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
-          variant="text"
-          @click="emit('toggle-fullscreen')"
-        />
+      <v-spacer />
 
-        <v-btn
-          v-if="isClosable !== false"
-          :aria-label="`Hide ${title}`"
-          density="compact"
-          icon="mdi-close"
-          :title="`Hide ${title}`"
-          variant="text"
-          @click="emit('close')"
-        />
-      </div>
+      <v-btn
+        :aria-label="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
+        class="text-medium-emphasis"
+        density="compact"
+        :icon="isFullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'"
+        size="x-small"
+        :title="isFullscreen ? `Restore ${title}` : `Fullscreen ${title}`"
+        variant="text"
+        @click="emit('toggle-fullscreen')"
+      />
+
+      <v-btn
+        v-if="isClosable !== false"
+        :aria-label="`Hide ${title}`"
+        class="text-medium-emphasis"
+        density="compact"
+        icon="mdi-close"
+        size="x-small"
+        :title="`Hide ${title}`"
+        variant="text"
+        @click="emit('close')"
+      />
     </header>
 
     <div class="workspace-sheet-content">
       <slot />
     </div>
-  </section>
+  </v-sheet>
 </template>
 
 <script lang="ts" setup>
+  /** Renders the shared titled surface, fullscreen control, and optional close control for a workspace area. */
+
+  /** Declares the display and interaction controls shared by every workspace area. */
   withDefaults(defineProps<{
+    /** Determines whether the area may be hidden from the workspace. */
     isClosable?: boolean
+
+    /** Indicates that the area currently occupies the fullscreen workspace view. */
     isFullscreen: boolean
+
+    /** Provides the accessible and visible title for the area. */
     title: string
   }>(), {
     isClosable: true,
   })
 
+  /** Emits requests for the owning layout to hide or toggle the area. */
   const emit = defineEmits<{
+    /** Requests that the owning layout hide this area. */
     'close': []
+
+    /** Requests that the owning layout toggle this area's fullscreen state. */
     'toggle-fullscreen': []
   }>()
 </script>
 
 <style scoped>
   .workspace-sheet {
-    background: rgb(var(--v-theme-background));
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.14);
-    border-radius: 8px;
     display: grid;
-    grid-template-rows: 40px minmax(0, 1fr);
-    min-block-size: 0;
-    min-inline-size: 0;
-    overflow: hidden;
-  }
-
-  .workspace-sheet-header {
-    align-items: center;
-    border-block-end: 1px solid rgba(var(--v-theme-on-surface), 0.14);
-    display: flex;
-    justify-content: space-between;
-    min-inline-size: 0;
-    padding-inline-start: 12px;
-  }
-
-  h2 {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .workspace-sheet-actions {
-    align-items: center;
-    display: flex;
-    flex: none;
-    gap: 2px;
-    padding-inline-end: 4px;
-  }
-
-  .workspace-sheet-content {
-    min-block-size: 0;
-    overflow: auto;
+    grid-template-rows: min-content minmax(0, 1fr);
   }
 </style>

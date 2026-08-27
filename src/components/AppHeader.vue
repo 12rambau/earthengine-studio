@@ -24,6 +24,7 @@
 </template>
 
 <script lang="ts" setup>
+  /** Renders the application identity and exposes account preferences through the header menu. */
   import appLogo from '@/assets/logo.png'
   import AvatarMenu from './app-header/AvatarMenu.vue'
 </script>

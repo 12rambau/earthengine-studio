@@ -50,7 +50,7 @@ function dispatchPointerEvent (
   target.dispatchEvent(event)
 }
 
-async function mountViewport () {
+async function mountViewport (rectangleOverrides: Partial<Record<string, Rectangle>> = {}) {
   const pinia = createPinia()
 
   setActivePinia(pinia)
@@ -59,19 +59,20 @@ async function mountViewport () {
     global: {
       plugins: [pinia],
       stubs: {
-        BottomPanel: createPanelStub('bottom-panel'),
-        EditorPane: createPanelStub('editor-pane'),
-        PrimarySidebar: createPanelStub('primary-sidebar'),
-        SecondarySidebar: createPanelStub('secondary-sidebar'),
+        BottomPanel: createPanelStub('panel'),
+        EditorPane: createPanelStub('editor'),
+        PrimarySidebar: createPanelStub('primary'),
+        SecondarySidebar: createPanelStub('secondary'),
       },
     },
   })
   const rectangles: Record<string, Rectangle> = {
-    '.bottom-panel': { bottom: 700, height: 212, left: 0, right: 1000, top: 488, width: 1000 },
-    '.editor-pane': { bottom: 480, height: 480, left: 288, right: 672, top: 0, width: 384 },
-    '.primary-sidebar': { bottom: 480, height: 480, left: 0, right: 280, top: 0, width: 280 },
-    '.secondary-sidebar': { bottom: 480, height: 480, left: 680, right: 1000, top: 0, width: 320 },
+    '.editor': { bottom: 480, height: 480, left: 288, right: 672, top: 0, width: 384 },
+    '.panel': { bottom: 700, height: 212, left: 0, right: 1000, top: 488, width: 1000 },
+    '.primary': { bottom: 480, height: 480, left: 0, right: 280, top: 0, width: 280 },
+    '.secondary': { bottom: 480, height: 480, left: 680, right: 1000, top: 0, width: 320 },
     '.workspace-viewport': { bottom: 700, height: 700, left: 0, right: 1000, top: 0, width: 1000 },
+    ...rectangleOverrides,
   }
 
   for (const [selector, rectangle] of Object.entries(rectangles)) {
@@ -88,8 +89,8 @@ describe('WorkspaceViewport', () => {
   it('exposes resize handles as keyboard-operable separators', async () => {
     const wrapper = await mountViewport()
     const store = useUserPreferencesStore()
-    const primaryHandle = wrapper.find('[data-resize-handle="vertical-primary-sidebar"]')
-    const bottomHandle = wrapper.find('[data-resize-handle="horizontal-bottom-panel"]')
+    const primaryHandle = wrapper.find('[data-resize-handle="vertical-primary"]')
+    const bottomHandle = wrapper.find('[data-resize-handle="horizontal-panel"]')
 
     expect(primaryHandle.attributes()).toMatchObject({
       'aria-orientation': 'vertical',
@@ -116,7 +117,7 @@ describe('WorkspaceViewport', () => {
   it('ignores pointer events that did not initiate the resize', async () => {
     const wrapper = await mountViewport()
     const store = useUserPreferencesStore()
-    const primaryHandle = wrapper.find('[data-resize-handle="vertical-primary-sidebar"]')
+    const primaryHandle = wrapper.find('[data-resize-handle="vertical-primary"]')
 
     dispatchPointerEvent(primaryHandle.element, 'pointerdown', {
       button: 0,
@@ -148,5 +149,34 @@ describe('WorkspaceViewport', () => {
     dispatchPointerEvent(window, 'pointerup', { pointerId: 1 })
 
     expect(store.layout.primarySidebarWidth).toBe(296)
+  })
+
+  it('extends a sidebar resize handle beside an adjacent bottom panel', async () => {
+    const wrapper = await mountViewport({
+      '.panel': { bottom: 700, height: 212, left: 288, right: 1000, top: 488, width: 712 },
+      '.primary': { bottom: 700, height: 700, left: 0, right: 280, top: 0, width: 280 },
+    })
+    const primaryHandle = wrapper.find('[data-resize-handle="vertical-primary"]')
+    const secondaryHandle = wrapper.find('[data-resize-handle="vertical-secondary"]')
+
+    expect(primaryHandle.element.style.height).toBe('700px')
+    expect(secondaryHandle.element.style.height).toBe('480px')
+  })
+
+  it('hides a panel and exits its fullscreen mode', async () => {
+    const wrapper = await mountViewport()
+    const store = useUserPreferencesStore()
+    const primarySidebar = wrapper.getComponent('.primary')
+
+    primarySidebar.vm.$emit('toggle-fullscreen')
+    await nextTick()
+
+    expect(wrapper.classes()).toContain('workspace-viewport-fullscreen')
+
+    primarySidebar.vm.$emit('close')
+    await nextTick()
+
+    expect(store.layout.primarySidebarVisible).toBe(false)
+    expect(wrapper.classes()).not.toContain('workspace-viewport-fullscreen')
   })
 })

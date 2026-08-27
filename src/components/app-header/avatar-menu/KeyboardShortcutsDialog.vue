@@ -72,13 +72,16 @@
 </template>
 
 <script lang="ts" setup>
+  /** Lists the keyboard commands that control the workspace layout. */
   import { ref } from 'vue'
 
+  /** Defines the shortcuts shown to users for workspace visibility controls. */
   const keyboardShortcuts = [
     { icon: 'mdi-dock-left', keys: ['Ctrl', 'B'], title: 'Toggle primary sidebar' },
     { icon: 'mdi-dock-right', keys: ['Ctrl', 'Alt', 'B'], title: 'Toggle secondary sidebar' },
     { icon: 'mdi-dock-bottom', keys: ['Ctrl', 'J'], title: 'Toggle panel' },
   ]
 
+  /** Controls whether the keyboard shortcut reference is displayed as a dialog. */
   const isOpen = ref(false)
 </script>

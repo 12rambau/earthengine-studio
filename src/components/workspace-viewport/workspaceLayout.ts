@@ -1,137 +1,70 @@
 import type { LayoutPreferences } from '@/stores/userPreferences'
 
-type WorkspaceGridArea = 'editor' | 'panel' | 'primary' | 'secondary'
-type WorkspaceSidebar = 'primary' | 'secondary'
+/** Identifies a named area in the workspace grid. */
+export type WorkspaceArea = 'editor' | 'panel' | 'primary' | 'secondary'
 
+/** Narrows workspace areas to the two resizable sidebars. */
+export type WorkspaceSidebar = Exclude<WorkspaceArea, 'editor' | 'panel'>
+
+/** Selects the breakpoint-specific layout constraints for the workspace grid. */
 export type WorkspaceGridSize = 'compact' | 'desktop'
 
+/** Describes the CSS Grid template values for a workspace arrangement. */
 export interface WorkspaceGridLayout {
+  /** Names the area assigned to each grid cell. */
   areas: string
+
+  /** Defines the width constraint for each visible column. */
   columns: string
-  rowGap: string
+
+  /** Defines the height constraint for each visible row. */
   rows: string
 }
 
-function getSidebarWidth (
-  sidebar: WorkspaceSidebar,
-  layoutPreferences: LayoutPreferences,
-  gridSize: WorkspaceGridSize,
-) {
-  const minimumWidth = gridSize === 'compact' ? 80 : 160
-  const preferredWidth = sidebar === 'primary'
-    ? layoutPreferences.primarySidebarWidth
-    : layoutPreferences.secondarySidebarWidth
-
-  return `minmax(${minimumWidth}px, ${preferredWidth}px)`
-}
-
-function isSidebarVisible (sidebar: WorkspaceSidebar, layoutPreferences: LayoutPreferences) {
-  return sidebar === 'primary'
-    ? layoutPreferences.primarySidebarVisible
-    : layoutPreferences.secondarySidebarVisible
-}
-
-function formatGridRow (gridAreas: WorkspaceGridArea[]) {
-  return `'${gridAreas.join(' ')}'`
-}
-
-function getWorkspaceGridLayoutWithoutEditor (
-  layoutPreferences: LayoutPreferences,
-  gridSize: WorkspaceGridSize,
-): WorkspaceGridLayout {
-  const leftSidebar: WorkspaceSidebar = layoutPreferences.primarySidebarPosition === 'left'
-    ? 'primary'
-    : 'secondary'
-  const rightSidebar: WorkspaceSidebar = leftSidebar === 'primary' ? 'secondary' : 'primary'
-  const visibleSidebars = [leftSidebar, rightSidebar].filter(sidebar => {
-    return isSidebarVisible(sidebar, layoutPreferences)
-  })
-
-  if (visibleSidebars.length === 0) {
-    return {
-      areas: '\'editor\'',
-      columns: 'minmax(0, 1fr)',
-      rowGap: '0',
-      rows: 'minmax(0, 1fr)',
-    }
-  }
-
-  const gridRows = [formatGridRow(visibleSidebars)]
-
-  if (layoutPreferences.panelVisible) {
-    gridRows.push(formatGridRow(visibleSidebars.map(() => 'panel')))
-  }
-
-  return {
-    areas: gridRows.join(' '),
-    columns: visibleSidebars.map((sidebar, index) => {
-      return index === visibleSidebars.length - 1
-        ? 'minmax(0, 1fr)'
-        : getSidebarWidth(sidebar, layoutPreferences, gridSize)
-    }).join(' '),
-    rowGap: layoutPreferences.panelVisible ? '8px' : '0',
-    rows: layoutPreferences.panelVisible
-      ? `minmax(0, 1fr) minmax(156px, ${layoutPreferences.panelHeight}px)`
-      : 'minmax(0, 1fr)',
-  }
-}
-
+/**
+ * Produces the CSS Grid tracks that reflect the user's visible panels, positions, and dimensions.
+ */
 export function getWorkspaceGridLayout (
   layoutPreferences: LayoutPreferences,
   gridSize: WorkspaceGridSize,
-  isEditorVisible = true,
 ): WorkspaceGridLayout {
-  if (!isEditorVisible) {
-    return getWorkspaceGridLayoutWithoutEditor(layoutPreferences, gridSize)
-  }
+  const isPrimaryOnLeft = layoutPreferences.primarySidebarPosition === 'left'
+  const leftSidebar: WorkspaceSidebar = isPrimaryOnLeft ? 'primary' : 'secondary'
+  const rightSidebar: WorkspaceSidebar = isPrimaryOnLeft ? 'secondary' : 'primary'
+  const gridColumns = ([leftSidebar, 'editor', rightSidebar] as const).filter(sidebar => {
+    return sidebar === 'editor' || layoutPreferences[`${sidebar}SidebarVisible`]
+  })
 
-  const leftSidebar: WorkspaceSidebar = layoutPreferences.primarySidebarPosition === 'left'
-    ? 'primary'
-    : 'secondary'
-  const rightSidebar: WorkspaceSidebar = leftSidebar === 'primary' ? 'secondary' : 'primary'
-  const gridColumns: Array<WorkspaceSidebar | 'editor'> = []
-
-  if (isSidebarVisible(leftSidebar, layoutPreferences)) {
-    gridColumns.push(leftSidebar)
-  }
-
-  gridColumns.push('editor')
-
-  if (isSidebarVisible(rightSidebar, layoutPreferences)) {
-    gridColumns.push(rightSidebar)
-  }
-
-  const topRow = gridColumns
-  const gridRows = [formatGridRow(topRow)]
+  const gridRows = [`'${gridColumns.join(' ')}'`]
 
   if (layoutPreferences.panelVisible) {
-    const panelRow = gridColumns.map((gridArea): WorkspaceGridArea => {
-      if (layoutPreferences.panelAlignment === 'justify') {
-        return 'panel'
-      }
-
-      if (layoutPreferences.panelAlignment === 'left') {
-        return gridArea === rightSidebar ? rightSidebar : 'panel'
-      }
-
-      if (layoutPreferences.panelAlignment === 'right') {
-        return gridArea === leftSidebar ? leftSidebar : 'panel'
-      }
-
-      return gridArea === 'editor' ? 'panel' : gridArea
+    /** Identifies areas that stay outside the bottom panel for each alignment choice. */
+    const retainedAreas: WorkspaceArea[] = {
+      center: [leftSidebar, rightSidebar],
+      justify: [],
+      left: [rightSidebar],
+      right: [leftSidebar],
+    }[layoutPreferences.panelAlignment]
+    const panelRow = gridColumns.map((area): WorkspaceArea => {
+      return retainedAreas.includes(area) ? area : 'panel'
     })
 
-    gridRows.push(formatGridRow(panelRow))
+    gridRows.push(`'${panelRow.join(' ')}'`)
   }
 
   return {
     areas: gridRows.join(' '),
     columns: gridColumns.map(gridArea => {
-      return gridArea === 'editor'
-        ? 'minmax(0, 1fr)'
-        : getSidebarWidth(gridArea, layoutPreferences, gridSize)
+      if (gridArea === 'editor') {
+        return 'minmax(0, 1fr)'
+      }
+
+      const preferredWidth = gridArea === 'primary'
+        ? layoutPreferences.primarySidebarWidth
+        : layoutPreferences.secondarySidebarWidth
+
+      return `minmax(${gridSize === 'compact' ? 80 : 160}px, ${preferredWidth}px)`
     }).join(' '),
-    rowGap: layoutPreferences.panelVisible ? '8px' : '0',
     rows: layoutPreferences.panelVisible
       ? `minmax(0, 1fr) minmax(156px, ${layoutPreferences.panelHeight}px)`
       : 'minmax(0, 1fr)',

@@ -42,6 +42,7 @@
 </template>
 
 <script lang="ts" setup>
+  /** Groups appearance, layout, and keyboard preference dialogs beneath the account menu. */
   import KeyboardShortcutsDialog from './avatar-menu/KeyboardShortcutsDialog.vue'
   import LayoutPreferenceDialog from './avatar-menu/LayoutPreferenceDialog.vue'
   import ThemeSelectorDialog from './avatar-menu/ThemeSelectorDialog.vue'

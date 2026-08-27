@@ -214,6 +214,7 @@
 </template>
 
 <script lang="ts" setup>
+  /** Lets the user configure workspace visibility, sidebar position, and panel alignment. */
   import { storeToRefs } from 'pinia'
   import { ref } from 'vue'
   import {
@@ -221,6 +222,7 @@
     useUserPreferencesStore,
   } from '@/stores/userPreferences'
 
+  /** Defines the selectable alignment options for the workspace bottom panel. */
   const panelAlignmentOptions: Array<{ icon: string, title: string, value: PanelAlignment }> = [
     { icon: 'mdi-format-align-left', title: 'Left', value: 'left' },
     { icon: 'mdi-format-align-right', title: 'Right', value: 'right' },
@@ -228,7 +230,12 @@
     { icon: 'mdi-format-align-justify', title: 'Justify', value: 'justify' },
   ]
 
+  /** Controls whether the layout preferences menu is displayed as a dialog. */
   const isOpen = ref(false)
+
+  /** Persists workspace layout preferences selected in this dialog. */
   const userPreferencesStore = useUserPreferencesStore()
+
+  /** Exposes current layout preferences to the dialog controls. */
   const { layout } = storeToRefs(userPreferencesStore)
 </script>

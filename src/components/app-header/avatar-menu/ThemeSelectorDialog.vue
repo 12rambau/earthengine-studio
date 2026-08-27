@@ -69,6 +69,7 @@
 </template>
 
 <script lang="ts" setup>
+  /** Lets the user choose the color theme persisted for the application. */
   import { storeToRefs } from 'pinia'
   import { computed, ref } from 'vue'
   import {
@@ -77,18 +78,26 @@
     useUserPreferencesStore,
   } from '@/stores/userPreferences'
 
+  /** Controls whether the appearance menu is displayed as a dialog. */
   const isOpen = ref(false)
+
+  /** Persists the selected application color theme. */
   const userPreferencesStore = useUserPreferencesStore()
+
+  /** Exposes the currently selected theme to the dialog template. */
   const { theme: selectedThemeName } = storeToRefs(userPreferencesStore)
 
+  /** Provides the label of the selected theme or the device-preference fallback. */
   const themeLabel = computed(() => {
     return themeOptions.find(option => option.value === selectedThemeName.value)?.title ?? 'Use device theme'
   })
 
+  /** Provides the icon associated with the selected theme or its fallback. */
   const themeIcon = computed(() => {
     return themeOptions.find(option => option.value === selectedThemeName.value)?.icon ?? 'mdi-theme-light-dark'
   })
 
+  /** Persists a chosen theme and closes the appearance dialog. */
   function selectTheme (themeName: ThemeName) {
     userPreferencesStore.setTheme(themeName)
     isOpen.value = false

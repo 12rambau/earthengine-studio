@@ -11,16 +11,16 @@
   >
     <primary-sidebar
       v-if="layout.primarySidebarVisible"
-      :is-fullscreen="fullscreenPanel === 'primary-sidebar'"
-      @close="hidePanel('primary-sidebar')"
-      @toggle-fullscreen="toggleFullscreen('primary-sidebar')"
+      :is-fullscreen="fullscreenPanel === 'primary'"
+      @close="hidePanel('primary')"
+      @toggle-fullscreen="toggleFullscreen('primary')"
     />
 
     <secondary-sidebar
       v-if="layout.secondarySidebarVisible"
-      :is-fullscreen="fullscreenPanel === 'secondary-sidebar'"
-      @close="hidePanel('secondary-sidebar')"
-      @toggle-fullscreen="toggleFullscreen('secondary-sidebar')"
+      :is-fullscreen="fullscreenPanel === 'secondary'"
+      @close="hidePanel('secondary')"
+      @toggle-fullscreen="toggleFullscreen('secondary')"
     />
 
     <editor-pane
@@ -30,29 +30,34 @@
 
     <bottom-panel
       v-if="layout.panelVisible"
-      :is-fullscreen="fullscreenPanel === 'bottom-panel'"
-      @close="hidePanel('bottom-panel')"
-      @toggle-fullscreen="toggleFullscreen('bottom-panel')"
+      :is-fullscreen="fullscreenPanel === 'panel'"
+      @close="hidePanel('panel')"
+      @toggle-fullscreen="toggleFullscreen('panel')"
     />
 
     <div
       v-for="handle in resizeHandles"
       :key="handle.id"
-      :aria-hidden="isKeyboardResizeHandle(handle) ? undefined : 'true'"
-      :aria-label="isKeyboardResizeHandle(handle) ? handle.label : undefined"
-      :aria-orientation="getResizeHandleOrientation(handle)"
-      :aria-valuemax="getResizeHandleMaximum(handle)"
-      :aria-valuemin="getResizeHandleMinimum(handle)"
-      :aria-valuenow="getResizeHandleValue(handle)"
+      :aria-hidden="handle.orientation === 'corner' ? 'true' : undefined"
+      :aria-label="handle.orientation === 'corner' ? undefined : handle.label"
+      :aria-orientation="handle.orientation === 'corner' ? undefined : handle.orientation"
+      :aria-valuemax="handle.maximum"
+      :aria-valuemin="handle.minimum"
+      :aria-valuenow="handle.orientation === 'corner' ? undefined : workspaceSizeValues[handle.area]"
       :class="[
         'workspace-resize-handle',
         `workspace-resize-handle-${handle.orientation}`,
         { 'is-resizing': isResizeHandleActive(handle) },
       ]"
       :data-resize-handle="handle.id"
-      :role="isKeyboardResizeHandle(handle) ? 'separator' : undefined"
-      :style="getResizeHandleStyle(handle)"
-      :tabindex="isKeyboardResizeHandle(handle) ? 0 : -1"
+      :role="handle.orientation === 'corner' ? undefined : 'separator'"
+      :style="{
+        height: `${handle.height}px`,
+        left: `${handle.left}px`,
+        top: `${handle.top}px`,
+        width: `${handle.width}px`,
+      }"
+      :tabindex="handle.orientation === 'corner' ? -1 : 0"
       @keydown="resizeWithKeyboard($event, handle)"
       @pointerdown="startResize($event, handle)"
     />
@@ -60,7 +65,8 @@
 </template>
 
 <script lang="ts" setup>
-  import type { WorkspacePanelId } from './workspace-viewport/workspacePanel'
+  /** Coordinates the workspace areas, fullscreen state, and user-driven resizing. */
+  import type { WorkspaceArea } from './workspace-viewport/workspaceLayout'
   import { storeToRefs } from 'pinia'
   import { computed, ref } from 'vue'
   import { useUserPreferencesStore } from '@/stores/userPreferences'
@@ -70,78 +76,71 @@
   import SecondarySidebar from './workspace-viewport/SecondarySidebar.vue'
   import { useWorkspaceResize } from './workspace-viewport/useWorkspaceResize'
 
-  const userPreferencesStore = useUserPreferencesStore()
-  const { layout } = storeToRefs(userPreferencesStore)
-  const fullscreenPanel = ref<WorkspacePanelId | null>(null)
+  /** Restricts closing actions to workspace areas that may be hidden. */
+  type CloseableWorkspaceArea = Exclude<WorkspaceArea, 'editor'>
 
+  /** Persists the user's workspace layout and dimensions. */
+  const userPreferencesStore = useUserPreferencesStore()
+
+  /** Keeps the rendered workspace synchronized with persisted layout preferences. */
+  const { layout } = storeToRefs(userPreferencesStore)
+
+  /** Identifies the area temporarily expanded to occupy the workspace. */
+  const fullscreenPanel = ref<WorkspaceArea | null>(null)
+
+  /** Maps each closable area to the preference action that controls its visibility. */
+  const setAreaVisibility = {
+    panel: userPreferencesStore.setPanelVisibility,
+    primary: userPreferencesStore.setPrimarySidebarVisibility,
+    secondary: userPreferencesStore.setSecondarySidebarVisibility,
+  } satisfies Record<CloseableWorkspaceArea, (isVisible: boolean) => void>
+
+  /** Prevents resize handles from remaining interactive while an area is fullscreen. */
   const isResizeEnabled = computed(() => {
     return fullscreenPanel.value === null
   })
 
+  /** Supplies the grid bindings and input handlers for workspace resizing. */
   const {
     activeResize,
-    getResizeHandleMaximum,
-    getResizeHandleMinimum,
-    getResizeHandleOrientation,
-    getResizeHandleStyle,
-    getResizeHandleValue,
-    isKeyboardResizeHandle,
     isResizeHandleActive,
     resizeHandles,
     resizeWithKeyboard,
     startResize,
     workspaceGridStyle,
+    workspaceSizeValues,
     workspaceViewportElement,
   } = useWorkspaceResize({
     isResizeEnabled,
     layout,
   })
 
-  function toggleFullscreen (panelId: WorkspacePanelId) {
-    fullscreenPanel.value = fullscreenPanel.value === panelId ? null : panelId
+  /** Expands an area or restores the regular grid when that area is already expanded. */
+  function toggleFullscreen (area: WorkspaceArea) {
+    fullscreenPanel.value = fullscreenPanel.value === area ? null : area
   }
 
-  function hidePanel (panelId: WorkspacePanelId) {
-    if (panelId === 'editor') {
-      return
-    }
-
-    if (fullscreenPanel.value === panelId) {
-      fullscreenPanel.value = null
-    }
-
-    if (panelId === 'primary-sidebar') {
-      userPreferencesStore.setPrimarySidebarVisibility(false)
-      return
-    }
-
-    if (panelId === 'secondary-sidebar') {
-      userPreferencesStore.setSecondarySidebarVisibility(false)
-      return
-    }
-
-    if (panelId === 'bottom-panel') {
-      userPreferencesStore.setPanelVisibility(false)
-    }
+  /** Hides a closable area and restores the grid if that area was fullscreen. */
+  function hidePanel (area: CloseableWorkspaceArea) {
+    fullscreenPanel.value = fullscreenPanel.value === area ? null : fullscreenPanel.value
+    setAreaVisibility[area](false)
   }
 
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+  @use 'vuetify/settings' as vuetify;
+
   .workspace-viewport {
     background: rgb(var(--v-theme-workspace-background));
     block-size: 100%;
-    box-sizing: border-box;
     display: grid;
-    column-gap: 8px;
+    gap: vuetify.$spacer;
     grid-template-areas: var(--workspace-grid-areas);
     grid-template-columns: var(--workspace-grid-columns);
     grid-template-rows: var(--workspace-grid-rows);
-    min-block-size: 0;
-    overflow: hidden;
-    padding: 0 8px 8px;
+    padding: 0 vuetify.$spacer * 2 vuetify.$spacer * 2;
     position: relative;
-    row-gap: var(--workspace-grid-row-gap);
   }
 
   .workspace-viewport.is-resizing {
@@ -164,16 +163,15 @@
   }
 
   .workspace-resize-handle-vertical {
-    cursor: col-resize;
+    cursor: ew-resize;
   }
 
   .workspace-resize-handle-horizontal {
-    cursor: row-resize;
+    cursor: ns-resize;
   }
 
   .workspace-resize-handle-corner {
-    cursor: crosshair;
-    z-index: 2;
+    cursor: move;
   }
 
   .workspace-resize-handle-vertical::before,
@@ -195,29 +193,28 @@
     opacity: 1;
   }
 
-  .primary-sidebar {
+  .primary {
     grid-area: primary;
   }
 
-  .secondary-sidebar {
+  .secondary {
     grid-area: secondary;
   }
 
-  .editor-pane {
+  .editor {
     grid-area: editor;
   }
 
-  .bottom-panel {
+  .panel {
     grid-area: panel;
   }
 
   .workspace-viewport-fullscreen {
-    column-gap: 0;
+    gap: 0;
     grid-template-areas: 'fullscreen';
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
     padding: 0;
-    row-gap: 0;
   }
 
   .workspace-viewport-fullscreen :deep(.workspace-sheet) {
@@ -238,12 +235,6 @@
       grid-template-areas: var(--workspace-grid-areas-compact);
       grid-template-columns: var(--workspace-grid-columns-compact);
       grid-template-rows: var(--workspace-grid-rows-compact);
-    }
-
-    .workspace-viewport-fullscreen {
-      grid-template-areas: 'fullscreen';
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr);
     }
   }
 </style>
