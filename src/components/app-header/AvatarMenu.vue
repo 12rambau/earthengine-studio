@@ -15,7 +15,6 @@
         <v-avatar
           color="primary"
           size="24"
-          variant="tonal"
         >
           <v-icon icon="mdi-account" />
         </v-avatar>
