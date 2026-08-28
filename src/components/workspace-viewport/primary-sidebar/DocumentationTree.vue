@@ -33,110 +33,124 @@
       Loading Earth Engine API docs.
     </v-card-text>
 
-    <v-treeview
-      v-else
-      aria-label="Earth Engine API documentation"
-      fluid
-      hide-actions
-      indent-lines
-      item-children="children"
-      item-props="props"
-      item-title="title"
-      item-value="value"
-      :items="documentationTree"
-      no-data-text="No API docs available"
-      open-on-click
-    >
-      <template #prepend="{ item }">
-        <v-icon
-          :color="item.iconColor"
-          :icon="item.icon"
-          size="small"
-        />
-      </template>
+    <template v-else>
+      <v-text-field
+        v-model="query"
+        aria-label="Filter Earth Engine API functions"
+        class="ma-1 documentation-search"
+        clearable
+        density="compact"
+        hide-details
+        placeholder="Filter API functions"
+        prepend-inner-icon="mdi-magnify"
+        variant="outlined"
+      />
 
-      <template #title="{ item }">
-        <v-menu
-          v-if="item.documentation"
-          :close-delay="0"
-          location="end"
-          max-width="420"
-          :offset="8"
-          :open-delay="200"
-          :open-on-click="false"
-          :open-on-focus="false"
-          open-on-hover
-          target="cursor"
-          :transition="false"
-        >
-          <template #activator="{ props: tooltipProps }">
-            <span
-              v-bind="tooltipProps"
-              class="documentation-leaf"
-            >
-              {{ item.title }}
-            </span>
-          </template>
+      <v-treeview
+        v-model:opened="opened"
+        aria-label="Earth Engine API documentation"
+        fluid
+        hide-actions
+        indent-lines
+        item-children="children"
+        item-props="props"
+        item-title="title"
+        item-value="value"
+        :items="filteredDocumentationTree"
+        no-data-text="No matching API functions"
+        open-on-click
+      >
+        <template #prepend="{ item }">
+          <v-icon
+            :color="item.iconColor"
+            :icon="item.icon"
+            size="small"
+          />
+        </template>
 
-          <v-sheet class="api-tooltip">
-            <div class="api-tooltip-signature">
-              <code>{{ item.documentation.usage }}</code>
-
-              <span v-if="item.documentation.returns">
-                Returns {{ item.documentation.returns }}
+        <template #title="{ item }">
+          <v-menu
+            v-if="item.documentation"
+            :close-delay="0"
+            location="end"
+            max-width="420"
+            :offset="8"
+            :open-delay="200"
+            :open-on-click="false"
+            :open-on-focus="false"
+            open-on-hover
+            target="cursor"
+            :transition="false"
+          >
+            <template #activator="{ props: tooltipProps }">
+              <span
+                v-bind="tooltipProps"
+                class="documentation-leaf"
+              >
+                {{ item.title }}
               </span>
-            </div>
+            </template>
 
-            <p
-              v-if="item.documentation.description"
-              class="api-tooltip-description"
-            >
-              {{ item.documentation.description }}
-            </p>
+            <v-sheet class="api-tooltip">
+              <div class="api-tooltip-signature">
+                <code>{{ item.documentation.usage }}</code>
 
-            <table
-              v-if="item.documentation.args.length > 0"
-              class="api-tooltip-arguments"
-            >
-              <thead>
-                <tr>
-                  <th>Argument</th>
-                  <th>Type</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
+                <span v-if="item.documentation.returns">
+                  Returns {{ item.documentation.returns }}
+                </span>
+              </div>
 
-              <tbody>
-                <tr
-                  v-for="argument in item.documentation.args"
-                  :key="argument.name"
-                >
-                  <td><code>{{ argument.name }}</code></td>
-                  <td><code>{{ argument.type }}</code></td>
-                  <td>{{ argument.details }}</td>
-                </tr>
-              </tbody>
-            </table>
+              <p
+                v-if="item.documentation.description"
+                class="api-tooltip-description"
+              >
+                {{ item.documentation.description }}
+              </p>
 
-            <a
-              class="api-tooltip-link"
-              :href="item.props?.href"
-              rel="noopener noreferrer"
-              target="_blank"
-              @click.stop
-            >
-              Open API reference
-              <v-icon
-                icon="mdi-open-in-new"
-                size="x-small"
-              />
-            </a>
-          </v-sheet>
-        </v-menu>
+              <table
+                v-if="item.documentation.args.length > 0"
+                class="api-tooltip-arguments"
+              >
+                <thead>
+                  <tr>
+                    <th>Argument</th>
+                    <th>Type</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
 
-        <span v-else>{{ item.title }}</span>
-      </template>
-    </v-treeview>
+                <tbody>
+                  <tr
+                    v-for="argument in item.documentation.args"
+                    :key="argument.name"
+                  >
+                    <td><code>{{ argument.name }}</code></td>
+                    <td><code>{{ argument.type }}</code></td>
+                    <td>{{ argument.details }}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <a
+                class="api-tooltip-link"
+                :href="item.props?.href"
+                rel="noopener noreferrer"
+                target="_blank"
+                @click.stop
+              >
+                Open API reference
+                <v-icon
+                  icon="mdi-open-in-new"
+                  size="x-small"
+                />
+              </a>
+            </v-sheet>
+          </v-menu>
+
+          <span v-else>{{ item.title }}</span>
+        </template>
+      </v-treeview>
+    </template>
   </v-card>
 </template>
 
@@ -148,7 +162,11 @@
   import { fetchEarthEngineApiDocumentation } from '@/services/earthEngine'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
   import { useGoogleProjectsStore } from '@/stores/googleProjects'
-  import { buildDocumentationTree } from './docsTree'
+  import {
+    buildDocumentationTree,
+    filterDocumentationTree,
+    getDocumentationTreeGroupValues,
+  } from './docsTree'
 
   /** Receives whether the surrounding tab currently displays the Earth Engine API documentation. */
   const { active } = defineProps<{
@@ -165,6 +183,12 @@
   /** Holds the complete algorithm registry after the active session loads it. */
   const entries = ref<ApiDocumentationEntry[]>([])
 
+  /** Stores the optional function-name filter, including the null value emitted when its clear control is used. */
+  const query = ref<string | null>('')
+
+  /** Tracks the expanded branches and reveals all filtered function paths while a query is active. */
+  const opened = ref<string[]>([])
+
   /** Indicates when the Earth Engine client is initializing or retrieving the algorithm registry. */
   const isLoading = ref(false)
 
@@ -173,6 +197,14 @@
 
   /** Converts the loaded flat API registry into the hierarchy rendered by the tree view. */
   const documentationTree = computed(() => buildDocumentationTree(entries.value))
+
+  /** Retains matching API functions and their parent groups while the user filters the tree. */
+  const filteredDocumentationTree = computed(() => filterDocumentationTree(documentationTree.value, query.value))
+
+  /** Expands every matching function path during a search and restores a collapsed tree when the filter is cleared. */
+  watch([filteredDocumentationTree, query], ([tree, filter]) => {
+    opened.value = filter?.trim() ? getDocumentationTreeGroupValues(tree) : []
+  }, { immediate: true })
 
   /** Loads current project documentation only while the Docs tab is visible and discards superseded responses. */
   watch([() => active, accessToken, selectedProject], async ([isActive, token, project], _previous, onCleanup) => {
@@ -215,6 +247,13 @@
 <style scoped>
   :deep(.v-treeview-indent-lines) {
     grid-template-columns: repeat(var(--v-indent-parts, 1), 28px);
+  }
+
+  .documentation-search :deep(.v-field) {
+    --v-field-input-padding-bottom: 0px;
+    --v-field-input-padding-top: 0px;
+    --v-input-control-height: 24px;
+    font-size: 11px;
   }
 
   .documentation-leaf {

@@ -63,6 +63,34 @@ function toDocumentationTreeItem (node: DocumentationTreeNode): DocumentationTre
   }
 }
 
+/** Retains only function leaves matching a query together with the parent groups needed to reach them. */
+export function filterDocumentationTree (items: DocumentationTreeItem[], query: string | null): DocumentationTreeItem[] {
+  const normalizedQuery = query?.trim().toLocaleLowerCase() ?? ''
+
+  if (!normalizedQuery) {
+    return items
+  }
+
+  return items.flatMap(item => {
+    if (!item.children) {
+      const functionName = item.documentation?.name ?? item.title
+
+      return functionName.toLocaleLowerCase().includes(normalizedQuery) ? [item] : []
+    }
+
+    const children = filterDocumentationTree(item.children, normalizedQuery)
+
+    return children.length > 0 ? [{ ...item, children }] : []
+  })
+}
+
+/** Collects every parent value in a filtered hierarchy so all matching functions are directly visible. */
+export function getDocumentationTreeGroupValues (items: DocumentationTreeItem[]): string[] {
+  return items.flatMap(item => {
+    return item.children ? [item.value, ...getDocumentationTreeGroupValues(item.children)] : []
+  })
+}
+
 /**
  * Builds the extension's dotted API hierarchy for the web tree view and hides the technical `ee` root.
  */
