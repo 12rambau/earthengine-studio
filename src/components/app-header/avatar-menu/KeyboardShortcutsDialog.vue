@@ -14,18 +14,19 @@
       <v-list-item
         v-bind="props"
         aria-label="Open keyboard shortcuts"
-        prepend-icon="mdi-keyboard-outline"
         title="Keyboard shortcuts"
       >
-        <template #append>
-          <v-icon icon="mdi-chevron-right" />
+        <template #prepend>
+          <v-icon
+            icon="mdi-keyboard-outline"
+            size="small"
+          />
         </template>
       </v-list-item>
     </template>
 
     <v-card
       aria-label="Keyboard shortcuts dialog"
-      density="compact"
       rounded="md"
     >
       <v-sheet
@@ -36,15 +37,10 @@
         <span style="color: rgb(var(--v-theme-on-primary))">Keyboard shortcuts</span>
       </v-sheet>
 
-      <v-list
-        aria-label="Keyboard shortcuts"
-        density="compact"
-        nav
-      >
+      <v-list aria-label="Keyboard shortcuts">
         <v-list-item
           v-for="shortcut in keyboardShortcuts"
           :key="shortcut.title"
-          slim
           :title="shortcut.title"
         >
           <template #prepend>
@@ -63,9 +59,8 @@
                 <span v-if="index > 0">+</span>
 
                 <v-chip
-                  density="compact"
                   rounded="sm"
-                  size="small"
+                  size="x-small"
                   variant="tonal"
                 >{{ key }}</v-chip>
               </template>

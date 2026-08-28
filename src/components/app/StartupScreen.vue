@@ -23,7 +23,7 @@
         aria-label="Loading workspace"
         color="white"
         indeterminate
-        size="28"
+        size="x-large"
         width="3"
       />
     </div>

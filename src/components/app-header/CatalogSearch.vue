@@ -92,7 +92,7 @@
                 <v-icon
                   :color="asset.iconColor"
                   :icon="asset.icon"
-                  size="18"
+                  size="small"
                 />
               </template>
             </v-list-item>

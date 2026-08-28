@@ -19,11 +19,36 @@ export default createVuetify({
     VCard: {
       density: 'compact',
     },
+    VChip: {
+      density: 'compact',
+    },
     VList: {
       density: 'compact',
+      prependGap: 4,
+      slim: true,
     },
     VListItem: {
       density: 'compact',
+      slim: true,
+    },
+    VRow: {
+      density: 'compact',
+    },
+    VTable: {
+      density: 'compact',
+    },
+    VTabs: {
+      density: 'compact',
+    },
+    VTextField: {
+      density: 'compact',
+    },
+    VToolbar: {
+      density: 'compact',
+    },
+    VTreeview: {
+      density: 'compact',
+      prependGap: 4,
       slim: true,
     },
   },

@@ -1,4 +1,25 @@
 @use 'vuetify/settings' with (
+  // The app relies on theme variables and UnoCSS instead of Vuetify's generated utility classes.
   $color-pack: false,
   $utilities: false,
+
+  // Compact density subtracts 8px, rendering 36px list items at 28px and 32px subheaders at 24px.
+  $list-padding: 0,
+  $list-item-min-height: 36px,
+  $list-item-one-line-min-height: 36px,
+  $list-item-two-line-min-height: 36px,
+  $list-item-padding: 0 16px,
+  $list-item-two-line-padding: 0 16px,
+  $list-item-title-font-size: 10px,
+  $list-item-title-letter-spacing: 0,
+  $list-item-title-line-height: 11px,
+  $list-item-subtitle-font-size: 10px,
+  $list-item-subtitle-letter-spacing: 0,
+  $list-item-subtitle-line-height: 11px,
+  $list-subheader-font-size: 10px,
+  $list-subheader-line-height: 11px,
+  $list-subheader-min-height: 32px,
+
+  // The large avatar modifier renders at 24px, fitting the 48px application header.
+  $avatar-height: 16px,
 );

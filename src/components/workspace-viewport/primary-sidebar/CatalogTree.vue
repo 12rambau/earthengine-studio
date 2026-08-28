@@ -1,14 +1,12 @@
 <template>
   <v-card
     class="catalog-tree-card"
-    density="compact"
     elevation="0"
     :loading="isLoading ? 'primary' : false"
     rounded="lg"
   >
     <v-treeview
       aria-label="Earth Engine data catalog"
-      density="compact"
       fluid
       hide-actions
       indent-lines
@@ -17,16 +15,14 @@
       item-value="value"
       :items="catalogItems"
       open-on-click
-      prepend-gap="4"
       return-object
-      slim
       @click:select="previewCatalogItem"
     >
       <template #prepend="{ isOpen, item }">
         <v-icon
           :color="item.iconColor"
           :icon="item.children && isOpen ? 'mdi-folder-open' : item.icon"
-          size="16"
+          size="small"
         />
       </template>
 
@@ -35,7 +31,6 @@
           v-if="item?.catalogHref"
           :aria-label="`Open ${item.title} catalog page`"
           class="catalog-tree-link"
-          density="compact"
           :href="item.catalogHref"
           icon="mdi-open-in-new"
           rel="noopener noreferrer"
@@ -328,15 +323,6 @@
   .catalog-tree-card {
     border-start-end-radius: 0;
     border-start-start-radius: 0;
-  }
-
-  .catalog-tree-card :deep(.v-list-item) {
-    min-block-size: 28px;
-    padding-block: 0;
-  }
-
-  .catalog-tree-card :deep(.v-list-item-title) {
-    font-size: 10px;
   }
 
   .catalog-tree-card :deep(.catalog-tree-link) {

@@ -14,19 +14,20 @@
       <v-list-item
         v-bind="props"
         aria-label="Change appearance"
-        :prepend-icon="themeIcon"
         :subtitle="themeLabel"
         title="Appearance"
       >
-        <template #append>
-          <v-icon icon="mdi-chevron-right" />
+        <template #prepend>
+          <v-icon
+            :icon="themeIcon"
+            size="small"
+          />
         </template>
       </v-list-item>
     </template>
 
     <v-card
       aria-label="Theme selector dialog"
-      density="compact"
       rounded="md"
     >
       <v-sheet
@@ -37,18 +38,11 @@
         <span style="color: rgb(var(--v-theme-on-primary))">Appearance</span>
       </v-sheet>
 
-      <v-list
-        aria-label="Appearance settings"
-        density="compact"
-        nav
-      >
+      <v-list aria-label="Appearance settings">
         <v-list-item
           v-for="option in themeOptions"
           :key="option.value"
           :aria-label="option.title"
-          density="compact"
-          nav
-          slim
           :title="option.title"
           @click="selectTheme(option.value)"
         >

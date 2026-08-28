@@ -2,19 +2,19 @@
   <v-menu
     eager
     location="bottom end"
-    offset="8"
+    offset="0"
   >
     <template #activator="{ props }">
       <v-btn
         v-bind="props"
         aria-label="Open user menu"
-        density="compact"
         icon
+        size="large"
         variant="text"
       >
         <v-avatar
           color="primary"
-          size="24"
+          size="large"
         >
           <v-icon icon="mdi-account" />
         </v-avatar>
@@ -23,9 +23,7 @@
 
     <v-list
       aria-label="User menu"
-      density="compact"
       min-width="224"
-      nav
     >
       <theme-selector-dialog />
 

@@ -24,6 +24,7 @@
           <v-btn
             aria-label="Close dataset preview"
             icon="mdi-close"
+            size="small"
             title="Close dataset preview"
             variant="text"
             @click="isOpen = false"
@@ -90,7 +91,7 @@
               v-for="tag in tags"
               :key="tag"
               label
-              size="small"
+              size="x-small"
             >{{ tag }}</v-chip>
           </v-chip-group>
 

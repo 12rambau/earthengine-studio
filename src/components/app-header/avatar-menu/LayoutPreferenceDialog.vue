@@ -14,18 +14,19 @@
       <v-list-item
         v-bind="props"
         aria-label="Customize layout"
-        prepend-icon="mdi-view-dashboard-outline"
         title="Layout"
       >
-        <template #append>
-          <v-icon icon="mdi-chevron-right" />
+        <template #prepend>
+          <v-icon
+            icon="mdi-view-dashboard-outline"
+            size="small"
+          />
         </template>
       </v-list-item>
     </template>
 
     <v-card
       aria-label="Layout preferences dialog"
-      density="compact"
       rounded="md"
     >
       <v-sheet
@@ -36,20 +37,13 @@
         <span style="color: rgb(var(--v-theme-on-primary))">Layout</span>
       </v-sheet>
 
-      <v-list
-        aria-label="Layout preferences"
-        density="compact"
-        nav
-      >
+      <v-list aria-label="Layout preferences">
         <v-list-subheader>Visibility</v-list-subheader>
 
         <v-list-item
           :aria-checked="layout.primarySidebarVisible"
           aria-label="Toggle primary sidebar"
-          density="compact"
-          nav
           role="menuitemcheckbox"
-          slim
           title="Primary sidebar"
           @click="userPreferencesStore.togglePrimarySidebarVisibility"
         >
@@ -74,10 +68,7 @@
         <v-list-item
           :aria-checked="layout.secondarySidebarVisible"
           aria-label="Toggle secondary sidebar"
-          density="compact"
-          nav
           role="menuitemcheckbox"
-          slim
           title="Secondary sidebar"
           @click="userPreferencesStore.toggleSecondarySidebarVisibility"
         >
@@ -102,10 +93,7 @@
         <v-list-item
           :aria-checked="layout.panelVisible"
           aria-label="Toggle bottom panel"
-          density="compact"
-          nav
           role="menuitemcheckbox"
-          slim
           title="Panel"
           @click="userPreferencesStore.togglePanelVisibility"
         >
@@ -133,9 +121,6 @@
 
         <v-list-item
           aria-label="Set primary sidebar position to left"
-          density="compact"
-          nav
-          slim
           title="Left"
           @click="userPreferencesStore.setPrimarySidebarPosition('left')"
         >
@@ -159,9 +144,6 @@
 
         <v-list-item
           aria-label="Set primary sidebar position to right"
-          density="compact"
-          nav
-          slim
           title="Right"
           @click="userPreferencesStore.setPrimarySidebarPosition('right')"
         >
@@ -191,9 +173,6 @@
           v-for="option in panelAlignmentOptions"
           :key="option.value"
           :aria-label="`Set panel alignment to ${option.value}`"
-          density="compact"
-          nav
-          slim
           :title="option.title"
           @click="userPreferencesStore.setPanelAlignment(option.value)"
         >
