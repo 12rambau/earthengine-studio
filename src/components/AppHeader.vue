@@ -17,6 +17,8 @@
           >
 
           <span class="app-title-name">Earth Engine Studio</span>
+
+          <project-selector />
         </span>
       </v-toolbar-title>
 
@@ -25,8 +27,6 @@
       </div>
 
       <div class="app-header-actions">
-        <project-selector />
-
         <avatar-menu />
       </div>
     </div>
@@ -54,6 +54,7 @@
   .app-brand {
     align-items: center;
     display: flex;
+    gap: 8px;
   }
 
   .app-title {
@@ -64,7 +65,6 @@
   .app-header-actions {
     align-items: center;
     display: flex;
-    gap: 4px;
     margin-inline-start: auto;
   }
 

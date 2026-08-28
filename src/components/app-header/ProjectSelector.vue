@@ -1,53 +1,51 @@
 <template>
   <v-dialog
     v-model="isOpen"
-    max-width="640"
+    location="top"
+    location-strategy="connected"
+    max-width="calc(100vw - 112px)"
+    origin="overlap"
     scrollable
+    target=".catalog-search-field .v-field"
+    transition="dialog-scale-transition"
+    viewport-margin="0"
+    width="480"
   >
     <template #activator="{ props }">
-      <v-btn
+      <v-text-field
         v-bind="props"
         :aria-label="projectSelectorLabel"
-        class="project-selector"
+        class="project-selector my-1"
         :disabled="!profile"
-        :loading="isLoading"
-        prepend-icon="mdi-google-cloud"
-        size="small"
-        variant="text"
-      >
-        <span class="project-selector-label">{{ selectedProject?.name ?? 'Select project' }}</span>
-
-        <v-icon
-          icon="mdi-menu-down"
-          size="small"
-        />
-      </v-btn>
+        hide-details
+        :loading="isLoading ? 'primary' : false"
+        :model-value="selectedProject?.name ?? 'Select project'"
+        prepend-inner-icon="mdi-google-cloud"
+        readonly
+        variant="outlined"
+      />
     </template>
 
-    <v-card aria-label="Google Cloud project selector">
-      <v-toolbar
-        density="compact"
-        title="Select a Google Cloud project"
+    <v-card
+      aria-label="Google Cloud project selector"
+      class="project-dialog-card"
+      rounded="md"
+    >
+      <v-sheet
+        class="d-flex align-center justify-center"
+        color="primary"
+        height="24"
       >
-        <template #append>
-          <v-btn
-            aria-label="Close project selector"
-            icon="mdi-close"
-            size="small"
-            title="Close project selector"
-            variant="text"
-            @click="isOpen = false"
-          />
-        </template>
-      </v-toolbar>
-
-      <v-divider />
+        <span style="color: rgb(var(--v-theme-on-primary))">Select Google Cloud project</span>
+      </v-sheet>
 
       <v-card-text class="pa-2">
         <v-text-field
           v-model="projectFilter"
           aria-label="Filter Google Cloud projects"
+          class="project-filter"
           clearable
+          density="compact"
           hide-details
           placeholder="Filter projects"
           prepend-inner-icon="mdi-magnify"
@@ -73,26 +71,11 @@
         <v-list-item
           v-for="project in filteredProjects"
           :key="project.id"
-          :active="selectedProject?.id === project.id"
-          :subtitle="project.id"
           :title="project.name"
           @click="selectProject(project)"
         >
-          <template #prepend>
-            <v-icon
-              icon="mdi-google-cloud"
-              size="small"
-            />
-          </template>
-
-          <template
-            v-if="selectedProject?.id === project.id"
-            #append
-          >
-            <v-icon
-              icon="mdi-check"
-              size="small"
-            />
+          <template #append>
+            <span class="project-id">{{ project.id }}</span>
           </template>
         </v-list-item>
       </v-list>
@@ -164,12 +147,26 @@
 
 <style scoped>
   .project-selector {
-    max-inline-size: 240px;
+    flex: 0 1 192px;
+    inline-size: 192px;
+    max-inline-size: 28vw;
   }
 
-  .project-selector-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .project-selector :deep(.v-field),
+  .project-filter :deep(.v-field) {
+    --v-field-input-padding-bottom: 0px;
+    --v-field-input-padding-top: 0px;
+    --v-input-control-height: 24px;
+    font-size: 11px;
+  }
+
+  .project-dialog-card {
+    margin-block-start: 1px;
+  }
+
+  .project-id {
+    color: rgb(var(--v-theme-on-surface) / var(--v-medium-emphasis-opacity));
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
   }
 </style>

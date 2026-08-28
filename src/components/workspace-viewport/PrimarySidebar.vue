@@ -52,7 +52,7 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="documentation">
-        <documentation-tree />
+        <documentation-tree :active="activeTab === 'documentation'" />
       </v-tabs-window-item>
     </v-tabs-window>
 

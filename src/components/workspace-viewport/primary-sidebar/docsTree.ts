@@ -1,23 +1,13 @@
-/** Identifies one documented argument accepted by an Earth Engine algorithm. */
-export interface ApiDocumentationArgument {
-  details: string
-  name: string
-  type: string
-}
+import type { ApiDocumentationEntry } from '@/services/earthEngine'
 
-/** Represents the algorithm metadata returned by the Earth Engine API registry. */
-export interface ApiDocumentationEntry {
-  args: ApiDocumentationArgument[]
-  description: string
-  id: string
-  name: string
-  returns: string
-  usage: string
-}
+export type { ApiDocumentationArgument, ApiDocumentationEntry } from '@/services/earthEngine'
 
 /** Describes an item rendered by Vuetify's hierarchical documentation tree. */
 export interface DocumentationTreeItem {
   children?: DocumentationTreeItem[]
+  documentation?: ApiDocumentationEntry
+  icon: string
+  iconColor: string
   props?: {
     href: string
     rel: 'noopener noreferrer'
@@ -54,10 +44,14 @@ function toDocumentationTreeItem (node: DocumentationTreeNode): DocumentationTre
   childNodes.sort((first, second) => first.title.localeCompare(second.title))
 
   const children = childNodes.map(child => toDocumentationTreeItem(child))
+  const isLeaf = children.length === 0
 
   return {
-    children: children.length > 0 ? children : undefined,
-    props: node.entry && children.length === 0
+    children: isLeaf ? undefined : children,
+    documentation: node.entry && isLeaf ? node.entry : undefined,
+    icon: isLeaf ? 'mdi-cube-outline' : 'mdi-file-tree-outline',
+    iconColor: isLeaf ? '#7e57c2' : '#fb8c00',
+    props: node.entry && isLeaf
       ? {
           href: getApiDocumentationUrl(node.entry.name),
           rel: 'noopener noreferrer',

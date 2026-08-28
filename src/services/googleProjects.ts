@@ -8,6 +8,9 @@ export interface GoogleCloudProject {
 /** Requests read-only access to the current account's visible Google Cloud projects. */
 export const googleCloudProjectReadScope = 'https://www.googleapis.com/auth/cloud-platform.read-only'
 
+/** Requests access to Earth Engine APIs on behalf of the connected Google account. */
+export const googleEarthEngineScope = 'https://www.googleapis.com/auth/earthengine'
+
 /** Lists every Google Cloud project the current account can view through Cloud Resource Manager. */
 export async function fetchGoogleCloudProjects (accessToken: string): Promise<GoogleCloudProject[]> {
   const projects: GoogleCloudProject[] = []

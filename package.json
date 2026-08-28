@@ -23,6 +23,7 @@
   "dependencies": {
     "@fontsource/roboto": "^5.2.10",
     "@fontsource/roboto-mono": "^5.2.8",
+    "@google/earthengine": "^1.7.41",
     "@mdi/font": "7.4.47",
     "js-cookie": "^3.0.8",
     "pinia": "^3.0.4",
