@@ -22,6 +22,16 @@ npm run dev
 
 The development server runs at `http://localhost:3000` by default.
 
+## Google OAuth
+
+The account menu uses [`vue3-google-signin`](https://www.npmjs.com/package/vue3-google-signin), the Vue wrapper for Google Identity Services' OAuth token model, to request only `openid email profile`. It retains the resulting access token and profile only in memory for the current browser session.
+
+1. Create a Google OAuth 2.0 **Web application** client in the Google Cloud console and configure the consent screen.
+2. Add each application origin, such as `http://localhost:3000`, to the client's authorized JavaScript origins.
+3. Copy `.env.example` to `.env.local` and set `VITE_GOOGLE_CLIENT_ID` to the web client ID.
+
+The client ID is public. Never add a Google client secret to a `VITE_` variable. This frontend flow is sufficient for requesting browser API access and displaying a profile; a future backend must validate tokens before treating a request as an authenticated server session.
+
 ## Quality Checks
 
 ```bash
