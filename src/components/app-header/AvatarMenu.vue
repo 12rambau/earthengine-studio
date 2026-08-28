@@ -8,14 +8,30 @@
       <v-btn
         v-bind="props"
         :aria-label="accountMenuLabel"
+        class="account-menu-activator"
         icon
         size="large"
         variant="text"
       >
         <v-avatar
+          v-if="profile?.picture"
+          class="profile-avatar"
+          :image="profile.picture"
+          size="large"
+          variant="text"
+        />
+
+        <v-avatar
+          v-else-if="profile"
           color="primary"
-          :icon="profile?.picture ? undefined : 'mdi-account'"
-          :image="profile?.picture"
+          size="large"
+          :text="profileInitials"
+        />
+
+        <v-avatar
+          v-else
+          color="primary"
+          icon="mdi-account"
           size="large"
         />
       </v-btn>
@@ -25,23 +41,53 @@
       aria-label="User menu"
       min-width="224"
     >
+      <v-list-subheader>User</v-list-subheader>
+
       <template v-if="profile">
         <v-list-item
-          aria-label="Signed in Google account"
+          aria-label="Change Google account"
+          :disabled="!isGoogleClientReady || isLoading"
           :subtitle="profile.email"
           :title="profile.name"
+          @click="signInWithGoogle"
         >
           <template #prepend>
             <v-avatar
-              color="primary"
-              :icon="profile.picture ? undefined : 'mdi-account'"
+              v-if="profile.picture"
+              class="profile-avatar"
               :image="profile.picture"
+              size="large"
+              variant="text"
+            />
+
+            <v-avatar
+              v-else
+              color="primary"
+              size="large"
+              :text="profileInitials"
+            />
+          </template>
+
+          <template #append>
+            <v-icon
+              icon="mdi-account-switch-outline"
               size="small"
             />
           </template>
         </v-list-item>
 
-        <v-divider />
+        <v-list-item
+          aria-label="Sign out from Google account"
+          title="Sign out"
+          @click="googleAuthStore.signOut"
+        >
+          <template #prepend>
+            <v-icon
+              icon="mdi-logout"
+              size="small"
+            />
+          </template>
+        </v-list-item>
       </template>
 
       <v-list-item
@@ -69,6 +115,8 @@
 
       <v-divider />
 
+      <v-list-subheader>Preferences</v-list-subheader>
+
       <theme-selector-dialog />
 
       <layout-preference-dialog />
@@ -78,23 +126,6 @@
       <v-list-subheader>Help</v-list-subheader>
 
       <keyboard-shortcuts-dialog />
-
-      <template v-if="profile">
-        <v-divider />
-
-        <v-list-item
-          aria-label="Sign out from Google account"
-          title="Sign out"
-          @click="googleAuthStore.signOut"
-        >
-          <template #prepend>
-            <v-icon
-              icon="mdi-logout"
-              size="small"
-            />
-          </template>
-        </v-list-item>
-      </template>
     </v-list>
   </v-menu>
 </template>
@@ -120,6 +151,20 @@
     return profile.value ? `Open account menu for ${profile.value.name}` : 'Open user menu'
   })
 
+  /** Derives a compact fallback monogram from the connected account name when Google provides no photo. */
+  const profileInitials = computed(() => {
+    if (!profile.value) {
+      return ''
+    }
+
+    return profile.value.name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(namePart => namePart.charAt(0).toUpperCase())
+      .join('')
+  })
+
   /** Initializes the plugin-managed OAuth token client only when a Google web client is configured. */
   const googleTokenClient = isConfigured.value
     ? useTokenClient({
@@ -143,3 +188,13 @@
     }
   }
 </script>
+
+<style scoped>
+  .account-menu-activator :deep(.v-btn__overlay) {
+    opacity: 0;
+  }
+
+  .profile-avatar :deep(.v-img) {
+    transform: scale(1.08);
+  }
+</style>
