@@ -40,6 +40,19 @@
           value="documentation"
           :variant="activeTab === 'documentation' ? 'tonal' : 'text'"
         />
+
+        <v-tab
+          class="ms-1 primary-sidebar-tab"
+          :class="{ 'primary-sidebar-tab--inactive': activeTab !== 'assets' }"
+          density="compact"
+          min-width="0"
+          rounded="sm"
+          size="x-small"
+          slim
+          text="Assets"
+          value="assets"
+          :variant="activeTab === 'assets' ? 'tonal' : 'text'"
+        />
       </v-tabs>
     </template>
 
@@ -54,6 +67,10 @@
       <v-tabs-window-item value="documentation">
         <documentation-tree :active="activeTab === 'documentation'" />
       </v-tabs-window-item>
+
+      <v-tabs-window-item value="assets">
+        <assets-tree :active="activeTab === 'assets'" />
+      </v-tabs-window-item>
     </v-tabs-window>
 
     <catalog-preview-dialog
@@ -67,6 +84,7 @@
   import type { CatalogPreviewTarget } from './primary-sidebar/catalog'
   /** Adapts the shared workspace sheet to represent the closable primary sidebar. */
   import { ref } from 'vue'
+  import AssetsTree from './primary-sidebar/AssetsTree.vue'
   import CatalogPreviewDialog from './primary-sidebar/CatalogPreviewDialog.vue'
   import CatalogTree from './primary-sidebar/CatalogTree.vue'
   import DocumentationTree from './primary-sidebar/DocumentationTree.vue'
