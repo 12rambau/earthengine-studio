@@ -1,8 +1,14 @@
 <template>
   <v-dialog
     v-model="isOpen"
-    max-width="320"
+    location="top"
+    location-strategy="connected"
+    max-width="calc(100vw - 112px)"
+    origin="overlap"
+    target=".catalog-search-field .v-field"
     transition="dialog-scale-transition"
+    viewport-margin="0"
+    width="480"
   >
     <template #activator="{ props }">
       <v-list-item
@@ -20,12 +26,12 @@
     <v-card
       aria-label="Keyboard shortcuts dialog"
       density="compact"
-      rounded="lg"
+      rounded="md"
     >
       <v-sheet
         class="d-flex align-center justify-center"
         color="primary"
-        height="32"
+        height="24"
       >
         <span style="color: rgb(var(--v-theme-on-primary))">Keyboard shortcuts</span>
       </v-sheet>
