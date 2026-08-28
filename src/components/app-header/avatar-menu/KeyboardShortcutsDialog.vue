@@ -77,6 +77,7 @@
 
   /** Defines the shortcuts shown to users for workspace visibility controls. */
   const keyboardShortcuts = [
+    { icon: 'mdi-magnify', keys: ['Ctrl', 'K'], title: 'Search catalog' },
     { icon: 'mdi-dock-left', keys: ['Ctrl', 'B'], title: 'Toggle primary sidebar' },
     { icon: 'mdi-dock-right', keys: ['Ctrl', 'Alt', 'B'], title: 'Toggle secondary sidebar' },
     { icon: 'mdi-dock-bottom', keys: ['Ctrl', 'J'], title: 'Toggle panel' },

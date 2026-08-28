@@ -8,6 +8,7 @@ applyTo: "**/*.vue"
 - Define exactly one Vue component per `.vue` file.
 - Use PascalCase component filenames and kebab-case directories.
 - Place direct child components owned by `ParentComponent.vue` in a sibling `parent-component/` directory. Nest each subsequent owned level in the kebab-case directory of its parent component.
+- Do not write local CSS when a Vuetify component, prop, or built-in utility provides the same behavior. Use CSS only for requirements without an equivalent Vuetify API.
 
 ```text
 components/

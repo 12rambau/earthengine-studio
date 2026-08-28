@@ -19,6 +19,7 @@ export default defineConfig({
   safelist: [
     ...Array.from({ length: 6 }, (_, i) => `elevation-${i}`),
     ...['', '-0', '-sm', '-lg', '-xl', '-pill', '-circle', '-shaped'].map(suffix => `rounded${suffix}`),
+    'rounded-b-0',
   ],
   outputToCssLayers: {
     cssLayerName: layer => layer === 'properties' ? null : `uno-${layer}`,
