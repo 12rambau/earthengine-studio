@@ -25,6 +25,8 @@
       </div>
 
       <div class="app-header-actions">
+        <project-selector />
+
         <avatar-menu />
       </div>
     </div>
@@ -36,6 +38,7 @@
   import appLogo from '@/assets/logo.png'
   import AvatarMenu from './app-header/AvatarMenu.vue'
   import CatalogSearch from './app-header/CatalogSearch.vue'
+  import ProjectSelector from './app-header/ProjectSelector.vue'
 </script>
 
 <style scoped>
@@ -59,6 +62,9 @@
   }
 
   .app-header-actions {
+    align-items: center;
+    display: flex;
+    gap: 4px;
     margin-inline-start: auto;
   }
 

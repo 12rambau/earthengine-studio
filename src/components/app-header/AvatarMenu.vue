@@ -135,6 +135,7 @@
   import { storeToRefs } from 'pinia'
   import { computed } from 'vue'
   import { useTokenClient } from 'vue3-google-signin'
+  import { googleCloudProjectReadScope } from '@/services/googleProjects'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
   import KeyboardShortcutsDialog from './avatar-menu/KeyboardShortcutsDialog.vue'
   import LayoutPreferenceDialog from './avatar-menu/LayoutPreferenceDialog.vue'
@@ -170,6 +171,7 @@
     ? useTokenClient({
       onError: response => googleAuthStore.reportAuthorizationFailure(response.error_description ?? response.error),
       onSuccess: response => void googleAuthStore.loadProfile(response.access_token),
+      scope: googleCloudProjectReadScope,
     })
     : undefined
 
