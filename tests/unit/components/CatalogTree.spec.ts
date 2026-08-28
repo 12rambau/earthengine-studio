@@ -22,11 +22,12 @@ vi.mock('@/components/workspace-viewport/primary-sidebar/catalog', () => ({
 /** Renders the tree boundary while preserving the props asserted by this component test. */
 const VTreeview = defineComponent({
   name: 'VTreeview',
+  emits: ['click:select'],
   props: {
     items: { default: () => [], type: Array },
     loadChildren: Function,
   },
-  template: '<div><slot name="append" :item="items[0]?.children?.[0]?.children?.[0]" /></div>',
+  template: '<div><button @click="$emit(\'click:select\', { id: items[0]?.children?.[0]?.children?.[0] })"></button><slot name="append" :item="items[0]?.children?.[0]?.children?.[0]" /></div>',
 })
 
 /** Mounts the catalog tree with minimal visual-component stubs for its asynchronous loading behavior. */
@@ -132,6 +133,16 @@ describe('CatalogTree', () => {
     ])
     expect(wrapper.get('a').attributes('href')).toBe('https://datasets.test/TEST/DATASET')
     expect(wrapper.get('a').attributes('target')).toBe('_blank')
+
+    await wrapper.get('button').trigger('click')
+
+    expect(wrapper.emitted('preview')).toEqual([[
+      expect.objectContaining({
+        assetName: 'TEST/DATASET',
+        source: 'stac',
+        stacHref: 'https://catalog.test/google.json/dataset.json',
+      }),
+    ]])
 
     await wrapper.setProps({ active: false })
     await wrapper.setProps({ active: true })

@@ -45,19 +45,29 @@
 
     <v-tabs-window v-model="activeTab">
       <v-tabs-window-item value="catalog">
-        <catalog-tree :active="activeTab === 'catalog'" />
+        <catalog-tree
+          :active="activeTab === 'catalog'"
+          @preview="openCatalogPreview"
+        />
       </v-tabs-window-item>
 
       <v-tabs-window-item value="documentation">
         <documentation-tree />
       </v-tabs-window-item>
     </v-tabs-window>
+
+    <catalog-preview-dialog
+      v-model="isCatalogPreviewOpen"
+      :target="catalogPreviewTarget"
+    />
   </workspace-sheet>
 </template>
 
 <script lang="ts" setup>
+  import type { CatalogPreviewTarget } from './primary-sidebar/catalog'
   /** Adapts the shared workspace sheet to represent the closable primary sidebar. */
   import { ref } from 'vue'
+  import CatalogPreviewDialog from './primary-sidebar/CatalogPreviewDialog.vue'
   import CatalogTree from './primary-sidebar/CatalogTree.vue'
   import DocumentationTree from './primary-sidebar/DocumentationTree.vue'
   import WorkspaceSheet from './WorkspaceSheet.vue'
@@ -70,6 +80,18 @@
 
   /** Identifies the primary-sidebar tab currently displayed in the content area, beginning with the public catalog. */
   const activeTab = ref('catalog')
+
+  /** Holds the dataset whose public metadata is currently displayed by the primary-sidebar dialog. */
+  const catalogPreviewTarget = ref<CatalogPreviewTarget | null>(null)
+
+  /** Determines whether the selected dataset's preview dialog is visible. */
+  const isCatalogPreviewOpen = ref(false)
+
+  /** Selects a public catalog dataset and makes its detailed preview visible. */
+  function openCatalogPreview (target: CatalogPreviewTarget) {
+    catalogPreviewTarget.value = target
+    isCatalogPreviewOpen.value = true
+  }
 
   /** Forwards primary sidebar actions to the workspace viewport. */
   const emit = defineEmits<{

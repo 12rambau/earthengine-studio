@@ -18,7 +18,9 @@
       :items="catalogItems"
       open-on-click
       prepend-gap="4"
+      return-object
       slim
+      @click:select="previewCatalogItem"
     >
       <template #prepend="{ isOpen, item }">
         <v-icon
@@ -54,6 +56,7 @@
   import {
     buildCommunityThemes,
     type CatalogEntry,
+    type CatalogPreviewTarget,
     catalogUrl,
     fetchCatalogAssetType,
     fetchCatalogEntries,
@@ -70,6 +73,7 @@
     href?: string
     icon: string
     iconColor?: string
+    previewTarget?: CatalogPreviewTarget
     title: string
     value: string
   }
@@ -78,6 +82,12 @@
   const { active } = defineProps<{
     /** Indicates that the surrounding tab currently displays the public catalog. */
     active: boolean
+  }>()
+
+  /** Requests the owning sidebar to display detailed metadata for a selected catalog leaf. */
+  const emit = defineEmits<{
+    /** Supplies the selected public STAC dataset's stable preview target. */
+    preview: [target: CatalogPreviewTarget]
   }>()
 
   /** Holds the complete public catalog hierarchy after it has been loaded. */
@@ -123,11 +133,21 @@
         const datasetId = collection.title.replaceAll('_', '/')
         const title = collection.title.split('_').slice(1).join('_') || collection.title
         const { color: iconColor, icon } = getCatalogAssetPresentation(assetType)
+        const catalogHref = getDatasetCatalogUrl(datasetId)
 
         return {
-          catalogHref: getDatasetCatalogUrl(datasetId),
+          catalogHref,
           icon,
           iconColor,
+          previewTarget: {
+            assetName: datasetId,
+            catalogHref,
+            source: 'stac',
+            stacHref: collection.href,
+            tags: [provider.title],
+            title,
+            type: assetType ?? 'unknown',
+          },
           title,
           value: `dataset:${collection.href}`,
         }
@@ -159,6 +179,19 @@
       icon: 'mdi-alert-circle-outline',
       title: 'Unable to load this catalog section.',
       value: `${value}:error`,
+    }
+  }
+
+  /** Emits only a public dataset selected through the treeview, leaving folders and failure entries inert. */
+  function previewCatalogItem ({ id }: { id: unknown }) {
+    if (typeof id !== 'object' || id === null || !('previewTarget' in id)) {
+      return
+    }
+
+    const item = id as CatalogTreeItem
+
+    if (item.previewTarget) {
+      emit('preview', item.previewTarget)
     }
   }
 
@@ -227,6 +260,18 @@
               catalogHref: dataset.docs,
               icon,
               iconColor,
+              previewTarget: {
+                assetName: dataset.id,
+                catalogHref: dataset.docs,
+                description: dataset.description,
+                previewHref: dataset.thumbnail,
+                provider: dataset.provider,
+                source: 'community' as const,
+                tags: [dataset.thematic_group, ...(dataset.tags?.split(',').map(tag => tag.trim()) ?? [])]
+                  .filter(Boolean),
+                title: dataset.title,
+                type: dataset.type,
+              },
               title: dataset.title,
               value: `community:${dataset.docs}`,
             }

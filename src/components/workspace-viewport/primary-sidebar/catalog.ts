@@ -10,11 +10,77 @@ export interface CatalogAssetPresentation {
   icon: string
 }
 
+/** Captures the preview metadata available before a selected dataset loads its official STAC collection. */
+interface BaseCatalogPreviewTarget {
+  assetName: string
+  catalogHref: string
+  description?: string
+  previewHref?: string
+  provider?: string
+  tags: string[]
+  title: string
+  type: string
+}
+
+/** Identifies an official dataset whose public STAC collection can supply richer preview metadata. */
+export interface StacCatalogPreviewTarget extends BaseCatalogPreviewTarget {
+  source: 'stac'
+  stacHref: string
+}
+
+/** Identifies a community dataset whose manifest contains all metadata available for its preview. */
+export interface CommunityCatalogPreviewTarget extends BaseCatalogPreviewTarget {
+  source: 'community'
+}
+
+/** Represents either public dataset source accepted by the catalog preview dialog. */
+export type CatalogPreviewTarget = CommunityCatalogPreviewTarget | StacCatalogPreviewTarget
+
+/** Represents one link exposed by a public STAC catalog or collection document. */
+export interface StacLink {
+  href: string
+  rel: string
+  title?: string
+}
+
+/** Describes an observation band available from a public STAC collection. */
+export interface StacBand {
+  'description'?: string
+  'gee:wavelength'?: string
+  'gsd'?: number
+  'name': string
+}
+
+/** Supplies the public STAC collection metadata shown by an official dataset preview. */
+export interface StacCollection {
+  'gee:type'?: string
+  'description'?: string
+  'extent'?: {
+    temporal?: {
+      interval?: Array<[string | null, string | null]>
+    }
+  }
+  'keywords'?: string[]
+  'links'?: StacLink[]
+  'providers'?: Array<{
+    name: string
+    url?: string
+  }>
+  'summaries'?: {
+    'eo:bands'?: StacBand[]
+  }
+  'title'?: string
+}
+
 /** Represents one public community catalog dataset. */
 export interface CommunityDataset {
+  description?: string
   docs: string
   id: string
+  provider?: string
+  tags?: string
   thematic_group: string
+  thumbnail?: string
   title: string
   type: string
 }
@@ -31,11 +97,7 @@ interface StacCatalog {
     type?: string
   }
   'gee:type'?: string
-  'links': {
-    href: string
-    rel: string
-    title?: string
-  }[]
+  'links': StacLink[]
 }
 
 /** Provides the public Earth Engine STAC catalog root. */
@@ -81,6 +143,11 @@ export async function fetchCatalogAssetType (url: string) {
   const catalog = await fetchCatalogJson<StacCatalog>(url)
 
   return catalog['gee:type']
+}
+
+/** Retrieves complete public collection metadata for an official dataset preview. */
+export function fetchCatalogCollection (url: string) {
+  return fetchCatalogJson<StacCollection>(url)
 }
 
 /** Maps Earth Engine asset types to the compact catalog icon and its semantic color. */
