@@ -47,6 +47,7 @@
       no-data-text="No Earth Engine assets in this project."
       open-on-click
       @click:open="loadOpenedFolder"
+      @click:select="previewAssetItem"
     >
       <template #prepend="{ isOpen, item }">
         <v-icon
@@ -71,6 +72,19 @@
         </v-tooltip>
 
         <span v-else>{{ item.title }}</span>
+      </template>
+
+      <template #append="{ item }">
+        <v-btn
+          v-if="item.asset && isPreviewableAsset(item.asset)"
+          :aria-label="`Preview ${item.title}`"
+          class="asset-preview-action"
+          icon="mdi-eye-outline"
+          size="x-small"
+          :title="`Preview ${item.title}`"
+          variant="text"
+          @click.stop="previewAsset(item.asset)"
+        />
       </template>
     </v-treeview>
   </v-card>
@@ -102,6 +116,12 @@
   const { active } = defineProps<{
     /** Indicates whether the Assets tab currently displays this tree. */
     active: boolean
+  }>()
+
+  /** Requests that the parent sidebar open a type-specific preview for a selected leaf asset. */
+  const emit = defineEmits<{
+    /** Supplies the canonical asset ID and Earth Engine type selected from the tree. */
+    preview: [assetId: string, assetType: string]
   }>()
 
   /** Provides the transient OAuth token required by authenticated Earth Engine asset requests. */
@@ -263,6 +283,29 @@
     }
   }
 
+  /** Emits a selected leaf asset so the parent can route it to an appropriate preview dialog. */
+  function previewAssetItem ({ id }: { id: unknown }) {
+    if (typeof id !== 'string') {
+      return
+    }
+
+    const item = findAssetTreeItem(assetTree.value, id)
+
+    if (item?.asset && !item.isFolder) {
+      emit('preview', item.asset.name, item.asset.type)
+    }
+  }
+
+  /** Identifies asset types that have a dedicated metadata preview dialog. */
+  function isPreviewableAsset (asset: EarthEngineAsset) {
+    return ['IMAGE', 'IMAGE_COLLECTION', 'TABLE', 'FEATURE_COLLECTION'].includes(asset.type)
+  }
+
+  /** Opens the selected compatible asset without changing the tree's active branch. */
+  function previewAsset (asset: EarthEngineAsset) {
+    emit('preview', asset.name, asset.type)
+  }
+
   /** Loads the selected project's root once the Assets tab is displayed and discards stale project responses. */
   watch([() => active, accessToken, selectedProject], async ([isActive, token, project], _previous, onCleanup) => {
     let isCurrent = true
@@ -328,6 +371,15 @@
 
   .asset-tree-card :deep(.v-treeview-indent-lines) {
     grid-template-columns: repeat(var(--v-indent-parts, 1), 28px);
+  }
+
+  .asset-preview-action {
+    opacity: 0;
+  }
+
+  .asset-tree-card :deep(.v-treeview-item:hover .asset-preview-action),
+  .asset-tree-card :deep(.v-treeview-item:focus-within .asset-preview-action) {
+    opacity: 1;
   }
 
   :global(.asset-id-tooltip) {

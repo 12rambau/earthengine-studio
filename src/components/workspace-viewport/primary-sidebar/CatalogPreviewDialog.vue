@@ -144,7 +144,15 @@
 
         <v-tabs-window v-model="activeTab">
           <v-tabs-window-item value="description">
-            <v-card-text>{{ description || 'No description is available for this dataset.' }}</v-card-text>
+            <v-card-text>
+              <div
+                v-if="descriptionHtml"
+                class="asset-description"
+                v-html="descriptionHtml"
+              />
+
+              <span v-else>No description is available for this dataset.</span>
+            </v-card-text>
           </v-tabs-window-item>
 
           <v-tabs-window-item
@@ -183,6 +191,7 @@
 <script lang="ts" setup>
   /** Displays public STAC or community metadata selected from the primary catalog tree. */
   import { computed, ref, watch } from 'vue'
+  import { renderAssetMarkdown } from './assetPreview'
   import {
     type CatalogPreviewTarget,
     fetchCatalogCollection,
@@ -264,6 +273,9 @@
 
   /** Uses an official collection description while preserving any community description supplied by its manifest. */
   const description = computed(() => collection.value?.description ?? props.target?.description ?? '')
+
+  /** Converts the public collection description Markdown into browser-safe HTML for the Description tab. */
+  const descriptionHtml = computed(() => renderAssetMarkdown(description.value))
 
   /** Builds the Earth Engine expression appropriate for the selected collection asset type. */
   const snippet = computed(() => {

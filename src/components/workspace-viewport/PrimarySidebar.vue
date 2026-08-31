@@ -69,7 +69,10 @@
       </v-tabs-window-item>
 
       <v-tabs-window-item value="assets">
-        <assets-tree :active="activeTab === 'assets'" />
+        <assets-tree
+          :active="activeTab === 'assets'"
+          @preview="openAssetPreview"
+        />
       </v-tabs-window-item>
     </v-tabs-window>
 
@@ -77,17 +80,36 @@
       v-model="isCatalogPreviewOpen"
       :target="catalogPreviewTarget"
     />
+
+    <image-preview-dialog
+      v-model="isImagePreviewOpen"
+      :asset-id="assetPreviewId"
+    />
+
+    <image-collection-preview-dialog
+      v-model="isImageCollectionPreviewOpen"
+      :asset-id="assetPreviewId"
+      @preview-image="openImagePreview"
+    />
+
+    <feature-collection-preview-dialog
+      v-model="isFeatureCollectionPreviewOpen"
+      :asset-id="assetPreviewId"
+    />
   </workspace-sheet>
 </template>
 
 <script lang="ts" setup>
   import type { CatalogPreviewTarget } from './primary-sidebar/catalog'
   /** Adapts the shared workspace sheet to represent the closable primary sidebar. */
-  import { ref } from 'vue'
+  import { computed, ref } from 'vue'
   import AssetsTree from './primary-sidebar/AssetsTree.vue'
   import CatalogPreviewDialog from './primary-sidebar/CatalogPreviewDialog.vue'
   import CatalogTree from './primary-sidebar/CatalogTree.vue'
   import DocumentationTree from './primary-sidebar/DocumentationTree.vue'
+  import FeatureCollectionPreviewDialog from './primary-sidebar/FeatureCollectionPreviewDialog.vue'
+  import ImageCollectionPreviewDialog from './primary-sidebar/ImageCollectionPreviewDialog.vue'
+  import ImagePreviewDialog from './primary-sidebar/ImagePreviewDialog.vue'
   import WorkspaceSheet from './WorkspaceSheet.vue'
 
   /** Declares the presentation state owned by the workspace viewport. */
@@ -105,10 +127,65 @@
   /** Determines whether the selected dataset's preview dialog is visible. */
   const isCatalogPreviewOpen = ref(false)
 
+  /** Holds the canonical asset ID selected from the authenticated asset tree. */
+  const assetPreviewId = ref<string | null>(null)
+
+  /** Holds the Earth Engine type used to route the selected asset to its specialized dialog. */
+  const assetPreviewType = ref<string | null>(null)
+
+  /** Determines whether any authenticated asset preview is visible. */
+  const isAssetPreviewOpen = ref(false)
+
+  /** Controls the dedicated image dialog only while the selected asset is an IMAGE. */
+  const isImagePreviewOpen = computed({
+    get: () => isAssetPreviewOpen.value && assetPreviewType.value === 'IMAGE',
+    set: value => {
+      if (!value) {
+        isAssetPreviewOpen.value = false
+      }
+    },
+  })
+
+  /** Controls the collection dialog only while the selected asset is an IMAGE_COLLECTION. */
+  const isImageCollectionPreviewOpen = computed({
+    get: () => isAssetPreviewOpen.value && assetPreviewType.value === 'IMAGE_COLLECTION',
+    set: value => {
+      if (!value) {
+        isAssetPreviewOpen.value = false
+      }
+    },
+  })
+
+  /** Controls the vector dialog for the Earth Engine TABLE representation of a FeatureCollection. */
+  const isFeatureCollectionPreviewOpen = computed({
+    get: () => isAssetPreviewOpen.value && ['TABLE', 'FEATURE_COLLECTION'].includes(assetPreviewType.value ?? ''),
+    set: value => {
+      if (!value) {
+        isAssetPreviewOpen.value = false
+      }
+    },
+  })
+
   /** Selects a public catalog dataset and makes its detailed preview visible. */
   function openCatalogPreview (target: CatalogPreviewTarget) {
     catalogPreviewTarget.value = target
     isCatalogPreviewOpen.value = true
+  }
+
+  /** Routes a selected asset ID to its type-specific preview dialog when Earth Engine supports one. */
+  function openAssetPreview (assetId: string, assetType: string) {
+    if (!['IMAGE', 'IMAGE_COLLECTION', 'TABLE', 'FEATURE_COLLECTION'].includes(assetType)) {
+      return
+    }
+
+    assetPreviewId.value = assetId
+    assetPreviewType.value = assetType
+    isAssetPreviewOpen.value = true
+  }
+
+  /** Opens the image dialog for a child asset selected from an image collection preview. */
+  function openImagePreview (assetId: string) {
+    openAssetPreview(assetId, 'IMAGE')
   }
 
   /** Forwards primary sidebar actions to the workspace viewport. */
