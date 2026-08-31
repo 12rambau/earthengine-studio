@@ -53,6 +53,19 @@
           value="assets"
           :variant="activeTab === 'assets' ? 'tonal' : 'text'"
         />
+
+        <v-tab
+          class="ms-1 primary-sidebar-tab"
+          :class="{ 'primary-sidebar-tab--inactive': activeTab !== 'scripts' }"
+          density="compact"
+          min-width="0"
+          rounded="sm"
+          size="x-small"
+          slim
+          text="Scripts"
+          value="scripts"
+          :variant="activeTab === 'scripts' ? 'tonal' : 'text'"
+        />
       </v-tabs>
     </template>
 
@@ -73,6 +86,10 @@
           :active="activeTab === 'assets'"
           @preview="openAssetPreview"
         />
+      </v-tabs-window-item>
+
+      <v-tabs-window-item value="scripts">
+        <scripts-tree />
       </v-tabs-window-item>
     </v-tabs-window>
 
@@ -110,6 +127,7 @@
   import FeatureCollectionPreviewDialog from './primary-sidebar/FeatureCollectionPreviewDialog.vue'
   import ImageCollectionPreviewDialog from './primary-sidebar/ImageCollectionPreviewDialog.vue'
   import ImagePreviewDialog from './primary-sidebar/ImagePreviewDialog.vue'
+  import ScriptsTree from './primary-sidebar/ScriptsTree.vue'
   import WorkspaceSheet from './WorkspaceSheet.vue'
 
   /** Declares the presentation state owned by the workspace viewport. */
