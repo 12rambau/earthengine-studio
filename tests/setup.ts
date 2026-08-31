@@ -1,4 +1,3 @@
-import Cookies from 'js-cookie'
 import { afterEach, vi } from 'vitest'
 
 class ResizeObserver {
@@ -35,9 +34,5 @@ vi.stubGlobal('visualViewport', {
 })
 
 afterEach(() => {
-  for (const cookieName of Object.keys(Cookies.get())) {
-    Cookies.remove(cookieName, { path: '/' })
-  }
-
   localStorage.clear()
 })

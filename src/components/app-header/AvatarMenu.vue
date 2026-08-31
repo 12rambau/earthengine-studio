@@ -46,7 +46,7 @@
       <template v-if="profile">
         <v-list-item
           aria-label="Change Google account"
-          :disabled="!isGoogleClientReady || isLoading"
+          :disabled="!isConfigured || isLoading"
           :subtitle="profile.email"
           :title="profile.name"
           @click="signInWithGoogle"
@@ -93,7 +93,7 @@
       <v-list-item
         v-else
         aria-label="Connect Google account"
-        :disabled="!isConfigured || !isGoogleClientReady || isLoading"
+        :disabled="!isConfigured || isLoading"
         title="Connect Google account"
         @click="signInWithGoogle"
       >
@@ -134,8 +134,6 @@
   /** Groups appearance, layout, and keyboard preference dialogs beneath the account menu. */
   import { storeToRefs } from 'pinia'
   import { computed } from 'vue'
-  import { useTokenClient } from 'vue3-google-signin'
-  import { googleCloudProjectReadScope, googleEarthEngineScope } from '@/services/googleProjects'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
   import KeyboardShortcutsDialog from './avatar-menu/KeyboardShortcutsDialog.vue'
   import LayoutPreferenceDialog from './avatar-menu/LayoutPreferenceDialog.vue'
@@ -166,28 +164,9 @@
       .join('')
   })
 
-  /** Initializes the plugin-managed OAuth token client only when a Google web client is configured. */
-  const googleTokenClient = isConfigured.value
-    ? useTokenClient({
-      onError: response => googleAuthStore.reportAuthorizationFailure(response.error_description ?? response.error),
-      onSuccess: response => void googleAuthStore.loadProfile(response.access_token),
-      scope: `${googleCloudProjectReadScope} ${googleEarthEngineScope}`,
-    })
-    : undefined
-
-  /** Prevents the connection command until the plugin has loaded Google Identity Services. */
-  const isGoogleClientReady = computed(() => googleTokenClient?.isReady.value ?? false)
-
-  /** Opens the plugin-managed Google account selector from the menu's explicit user gesture. */
+  /** Opens Firebase Authentication's Google account selector from the menu's explicit user gesture. */
   function signInWithGoogle () {
-    if (!googleTokenClient || !isGoogleClientReady.value) {
-      googleAuthStore.reportAuthorizationFailure('Google sign-in is not ready.')
-      return
-    }
-
-    if (googleAuthStore.startAuthorization()) {
-      googleTokenClient.login({ prompt: 'select_account' })
-    }
+    void googleAuthStore.signInWithGoogle()
   }
 </script>
 

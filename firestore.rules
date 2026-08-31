@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasOnlyFields(data, fields) {
+      return data.keys().hasAll(fields) && data.keys().hasOnly(fields);
+    }
+
+    function isValidUserProfile() {
+      let data = request.resource.data;
+      return hasOnlyFields(data, ['displayName', 'email', 'emailVerified', 'photoUrl', 'uid', 'updatedAt'])
+        && data.uid == request.auth.uid
+        && (data.displayName is string || data.displayName == null)
+        && (data.email is string || data.email == null)
+        && data.emailVerified is bool
+        && (data.photoUrl is string || data.photoUrl == null)
+        && data.updatedAt == request.time;
+    }
+
+    function isValidWorkspaceSettings() {
+      let data = request.resource.data;
+      let layout = data.layout;
+      return hasOnlyFields(data, ['layout', 'theme', 'updatedAt'])
+        && data.theme in ['dark', 'light', 'system']
+        && layout is map
+        && hasOnlyFields(layout, [
+          'panelAlignment',
+          'panelHeight',
+          'panelVisible',
+          'primarySidebarPosition',
+          'primarySidebarVisible',
+          'primarySidebarWidth',
+          'secondarySidebarVisible',
+          'secondarySidebarWidth',
+        ])
+        && layout.panelAlignment in ['center', 'justify', 'left', 'right']
+        && layout.panelHeight is int && layout.panelHeight >= 160 && layout.panelHeight <= 720
+        && layout.panelVisible is bool
+        && layout.primarySidebarPosition in ['left', 'right']
+        && layout.primarySidebarVisible is bool
+        && layout.primarySidebarWidth is int && layout.primarySidebarWidth >= 160 && layout.primarySidebarWidth <= 720
+        && layout.secondarySidebarVisible is bool
+        && layout.secondarySidebarWidth is int && layout.secondarySidebarWidth >= 160 && layout.secondarySidebarWidth <= 720
+        && data.updatedAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserProfile();
+
+      match /settings/workspace {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidWorkspaceSettings();
+      }
+    }
+  }
+}

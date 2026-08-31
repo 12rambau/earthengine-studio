@@ -1,75 +1,112 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { googleCloudProjectReadScope, googleEarthEngineScope } from '@/services/googleProjects'
 import { useGoogleAuthStore } from '@/stores/googleAuth'
 
-describe('Google auth store', () => {
+const firebaseRuntime = vi.hoisted(() => ({
+  addScope: vi.fn(),
+  auth: {},
+  credentialFromResult: vi.fn(),
+  onAuthStateChanged: vi.fn(),
+  setCustomParameters: vi.fn(),
+  signInWithPopup: vi.fn(),
+  signOut: vi.fn(),
+}))
+
+vi.mock('@/services/firebase', () => ({
+  firebaseAuth: firebaseRuntime.auth,
+  firebaseAuthReady: Promise.resolve(),
+}))
+
+vi.mock('firebase/auth', () => ({
+  GoogleAuthProvider: class {
+    static credentialFromResult = firebaseRuntime.credentialFromResult
+
+    addScope = firebaseRuntime.addScope
+    setCustomParameters = firebaseRuntime.setCustomParameters
+  },
+  onAuthStateChanged: firebaseRuntime.onAuthStateChanged,
+  signInWithPopup: firebaseRuntime.signInWithPopup,
+  signOut: firebaseRuntime.signOut,
+}))
+
+describe('Firebase Google auth store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'earthengine-studio.apps.googleusercontent.com')
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    vi.unstubAllGlobals()
-  })
-
-  it('exposes the account details returned by a basic-profile access token', async () => {
-    const fetchStub = vi.fn().mockResolvedValue({
-      json: async () => ({
-        email: 'ada@example.com',
-        name: 'Ada Lovelace',
-        picture: 'https://example.com/ada.png',
-        sub: 'google-subject',
-      }),
-      ok: true,
+    vi.clearAllMocks()
+    firebaseRuntime.credentialFromResult.mockReturnValue({ accessToken: 'google-access-token' })
+    firebaseRuntime.onAuthStateChanged.mockImplementation((_auth, observer) => {
+      observer(null)
+      return vi.fn()
     })
+    firebaseRuntime.signOut.mockResolvedValue(undefined)
+  })
 
-    vi.stubGlobal('fetch', fetchStub)
+  it('restores Firebase profile claims supplied by the Auth observer', async () => {
+    firebaseRuntime.onAuthStateChanged.mockImplementation((_auth, observer) => {
+      observer({
+        email: 'ada@example.com',
+        displayName: 'Ada Lovelace',
+        emailVerified: true,
+        photoURL: 'https://example.com/ada.png',
+        uid: 'firebase-ada',
+      })
+      return vi.fn()
+    })
 
     const store = useGoogleAuthStore()
 
-    expect(store.startAuthorization()).toBe(true)
-    await store.loadProfile('access-token')
+    await store.initialize()
 
     expect(store.profile).toEqual({
       email: 'ada@example.com',
+      emailVerified: true,
       name: 'Ada Lovelace',
       picture: 'https://example.com/ada.png',
-      subject: 'google-subject',
+      subject: 'firebase-ada',
     })
-
-    expect(fetchStub).toHaveBeenCalledWith(
-      'https://openidconnect.googleapis.com/v1/userinfo',
-      { headers: { Authorization: 'Bearer access-token' } },
-    )
     expect(store.status).toBe('authenticated')
   })
 
-  it('leaves the application unconfigured without a Google client identifier', async () => {
-    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '')
-
+  it('requests the Earth Engine scopes from Firebase Google sign-in and keeps the provider token in memory', async () => {
+    firebaseRuntime.signInWithPopup.mockResolvedValue({
+      user: {
+        displayName: 'Ada Lovelace',
+        email: 'ada@example.com',
+        emailVerified: true,
+        photoURL: 'https://example.com/ada.png',
+        uid: 'firebase-ada',
+      },
+    })
     const store = useGoogleAuthStore()
 
-    expect(store.startAuthorization()).toBe(false)
+    await store.signInWithGoogle()
 
-    expect(store.isConfigured).toBe(false)
-    expect(store.error).toBe('Google sign-in is not configured.')
-    expect(store.status).toBe('unconfigured')
+    expect(firebaseRuntime.addScope).toHaveBeenCalledWith(googleCloudProjectReadScope)
+    expect(firebaseRuntime.addScope).toHaveBeenCalledWith(googleEarthEngineScope)
+    expect(firebaseRuntime.setCustomParameters).toHaveBeenCalledWith({ prompt: 'select_account' })
+    expect(store.accessToken).toBe('google-access-token')
+    expect(store.profile?.subject).toBe('firebase-ada')
+    expect(store.status).toBe('authenticated')
   })
 
-  it('clears the in-memory Google session without retaining the access token', async () => {
-    const fetchStub = vi.fn().mockResolvedValue({
-      json: async () => ({ email: 'ada@example.com', sub: 'google-subject' }),
-      ok: true,
+  it('clears the in-memory Google API token when Firebase signs out', async () => {
+    firebaseRuntime.signInWithPopup.mockResolvedValue({
+      user: {
+        displayName: 'Ada Lovelace',
+        email: 'ada@example.com',
+        emailVerified: true,
+        photoURL: null,
+        uid: 'firebase-ada',
+      },
     })
-
-    vi.stubGlobal('fetch', fetchStub)
 
     const store = useGoogleAuthStore()
 
-    await store.loadProfile('access-token')
-    store.signOut()
+    await store.signInWithGoogle()
+    await store.signOut()
 
+    expect(firebaseRuntime.signOut).toHaveBeenCalledWith(firebaseRuntime.auth)
     expect(store.accessToken).toBeNull()
     expect(store.profile).toBeNull()
     expect(store.status).toBe('ready')

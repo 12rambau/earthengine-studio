@@ -1,35 +1,31 @@
-import Cookies from 'js-cookie'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   clampWorkspacePanelSize,
   defaultLayoutPreferences,
-  getUserPreferenceKey,
   isPanelAlignment,
   isPrimarySidebarPosition,
   isThemeName,
-  layoutPreferenceKey,
   parseLayoutPreferences,
-  readUserPreference,
   resolveThemeName,
   serializeLayoutPreferences,
-  themePreferenceKey,
   useUserPreferencesStore,
   workspacePanelHeightRange,
   workspaceSidebarWidthRange,
-  writeUserPreference,
 } from '@/stores/userPreferences'
 
-function clearUserPreferenceCookie (preferenceName: string) {
-  Cookies.remove(getUserPreferenceKey(preferenceName), { path: '/' })
-}
+const firebasePersistence = vi.hoisted(() => ({
+  fetchFirestoreUserPreferences: vi.fn(),
+  saveFirestoreUserPreferences: vi.fn(),
+}))
+
+vi.mock('@/services/userPersistence', () => firebasePersistence)
 
 describe('user preferences store', () => {
   beforeEach(() => {
-    clearUserPreferenceCookie('layout')
-    clearUserPreferenceCookie('theme')
-    localStorage.clear()
     setActivePinia(createPinia())
+    firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue(null)
+    firebasePersistence.saveFirestoreUserPreferences.mockResolvedValue(undefined)
   })
 
   it('accepts the supported theme preferences only', () => {
@@ -78,65 +74,53 @@ describe('user preferences store', () => {
     expect(resolveThemeName('dark', false)).toBe('dark')
   })
 
-  it('persists any validated user preference in a cookie', () => {
-    const isDensity = (value: string | null): value is 'comfortable' | 'compact' => {
-      return value === 'comfortable' || value === 'compact'
-    }
-
-    writeUserPreference('density', 'compact')
-
-    expect(readUserPreference('density', isDensity)).toBe('compact')
-
-    clearUserPreferenceCookie('density')
-  })
-
-  it('restores the theme preference from the cookie', () => {
-    writeUserPreference('theme', 'light')
+  it('restores the theme preference from Firestore', async () => {
+    firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue({
+      layout: defaultLayoutPreferences,
+      theme: 'light',
+    })
     const userPreferencesStore = useUserPreferencesStore()
 
-    userPreferencesStore.initialize()
+    await userPreferencesStore.initialize('google-subject')
 
     expect(userPreferencesStore.theme).toBe('light')
   })
 
-  it('restores the layout preferences from the cookie', () => {
+  it('restores the layout preferences from Firestore', async () => {
     const savedLayout = {
       ...defaultLayoutPreferences,
       panelAlignment: 'center' as const,
       primarySidebarPosition: 'right' as const,
       secondarySidebarVisible: false,
     }
-    writeUserPreference('layout', serializeLayoutPreferences(savedLayout))
+    firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue({
+      layout: savedLayout,
+      theme: 'system',
+    })
     const userPreferencesStore = useUserPreferencesStore()
 
-    userPreferencesStore.initialize()
+    await userPreferencesStore.initialize('google-subject')
 
     expect(userPreferencesStore.layout).toEqual(savedLayout)
   })
 
-  it('migrates the existing local theme preference to a cookie', () => {
-    localStorage.setItem(themePreferenceKey, 'dark')
+  it('persists a selected theme for the active Firebase user', async () => {
     const userPreferencesStore = useUserPreferencesStore()
 
-    userPreferencesStore.initialize()
-
-    expect(userPreferencesStore.theme).toBe('dark')
-    expect(readUserPreference('theme', isThemeName)).toBe('dark')
-    expect(localStorage.getItem(themePreferenceKey)).toBeNull()
-  })
-
-  it('persists a selected theme preference in a cookie', () => {
-    const userPreferencesStore = useUserPreferencesStore()
-
+    await userPreferencesStore.initialize('google-subject')
     userPreferencesStore.setTheme('dark')
 
     expect(userPreferencesStore.theme).toBe('dark')
-    expect(readUserPreference('theme', isThemeName)).toBe('dark')
+    expect(firebasePersistence.saveFirestoreUserPreferences).toHaveBeenLastCalledWith('google-subject', {
+      layout: defaultLayoutPreferences,
+      theme: 'dark',
+    })
   })
 
-  it('persists layout updates in a cookie', () => {
+  it('persists layout updates for the active Firebase user', async () => {
     const userPreferencesStore = useUserPreferencesStore()
 
+    await userPreferencesStore.initialize('google-subject')
     userPreferencesStore.setPrimarySidebarPosition('right')
     userPreferencesStore.setPanelAlignment('left')
     userPreferencesStore.setPanelHeight(320)
@@ -153,6 +137,9 @@ describe('user preferences store', () => {
       primarySidebarWidth: 360,
       secondarySidebarWidth: 420,
     })
-    expect(parseLayoutPreferences(Cookies.get(layoutPreferenceKey) ?? null)).toEqual(userPreferencesStore.layout)
+    expect(firebasePersistence.saveFirestoreUserPreferences).toHaveBeenLastCalledWith('google-subject', {
+      layout: userPreferencesStore.layout,
+      theme: 'system',
+    })
   })
 })

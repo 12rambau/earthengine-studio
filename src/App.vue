@@ -25,9 +25,12 @@
   import AppHeader from '@/components/AppHeader.vue'
   import { preloadCatalog } from '@/components/workspace-viewport/primary-sidebar/catalog'
   import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
+  import { upsertFirebaseUserProfile } from '@/services/userPersistence'
+  import { useGoogleAuthStore } from '@/stores/googleAuth'
   import { resolveThemeName, useUserPreferencesStore } from '@/stores/userPreferences'
 
   const theme = useTheme()
+  const googleAuthStore = useGoogleAuthStore()
   const userPreferencesStore = useUserPreferencesStore()
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -73,7 +76,19 @@
     }
   }
 
-  userPreferencesStore.initialize()
+  /** Mirrors an authenticated Firebase user before restoring the Firestore preferences that user owns. */
+  watch(() => googleAuthStore.profile, profile => {
+    if (!profile) {
+      userPreferencesStore.clearUser()
+      return
+    }
+
+    void upsertFirebaseUserProfile(profile)
+      .then(() => userPreferencesStore.initialize(profile.subject))
+      .catch(() => userPreferencesStore.clearUser())
+  }, { immediate: true })
+
+  googleAuthStore.initialize()
   watch(() => userPreferencesStore.theme, applyTheme, { immediate: true })
 
   onMounted(async () => {
