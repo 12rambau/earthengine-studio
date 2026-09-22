@@ -59,9 +59,10 @@ describe('Firestore user persistence', () => {
   it('stores structured workspace settings beneath the authenticated user', async () => {
     const layout = { panelVisible: false }
 
-    await saveFirestoreUserPreferences('firebase-ada', { layout, theme: 'dark' })
+    await saveFirestoreUserPreferences('firebase-ada', { lastProjectId: 'earth-analysis', layout, theme: 'dark' })
 
     expect(firebaseRuntime.setDoc).toHaveBeenCalledWith('users/firebase-ada/settings/workspace', {
+      lastProjectId: 'earth-analysis',
       layout,
       theme: 'dark',
       updatedAt: 'server-timestamp',

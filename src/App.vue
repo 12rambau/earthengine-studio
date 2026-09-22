@@ -27,10 +27,12 @@
   import WorkspaceViewport from '@/components/WorkspaceViewport.vue'
   import { upsertFirebaseUserProfile } from '@/services/userPersistence'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
+  import { useGoogleProjectsStore } from '@/stores/googleProjects'
   import { resolveThemeName, useUserPreferencesStore } from '@/stores/userPreferences'
 
   const theme = useTheme()
   const googleAuthStore = useGoogleAuthStore()
+  const googleProjectsStore = useGoogleProjectsStore()
   const userPreferencesStore = useUserPreferencesStore()
   const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)')
 
@@ -76,15 +78,24 @@
     }
   }
 
-  /** Mirrors an authenticated Firebase user before restoring the Firestore preferences that user owns. */
+  /**
+   * Mirrors an authenticated Firebase user, restores that user's Firestore preferences, then loads their Google
+   * Cloud projects so the remembered project ID is available before a project selection falls back to the first one.
+   */
   watch(() => googleAuthStore.profile, profile => {
     if (!profile) {
       userPreferencesStore.clearUser()
+      googleProjectsStore.clearProjects()
       return
     }
 
     void upsertFirebaseUserProfile(profile)
       .then(() => userPreferencesStore.initialize(profile.subject))
+      .then(() => {
+        const { accessToken } = googleAuthStore
+
+        return accessToken ? googleProjectsStore.loadProjects(accessToken) : undefined
+      })
       .catch(() => userPreferencesStore.clearUser())
   }, { immediate: true })
 

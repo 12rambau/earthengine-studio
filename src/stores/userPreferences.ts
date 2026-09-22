@@ -141,11 +141,15 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
   const theme = ref<ThemeName>('system')
   const layout = ref<LayoutPreferences>({ ...defaultLayoutPreferences })
 
+  /** Remembers the last Google Cloud project selected by this user across sessions. */
+  const lastProjectId = ref<string | null>(null)
+
   /** Restores validated Firestore settings for the Firebase Auth user that has just been restored in this browser. */
   async function initialize (userId: string) {
     activeUserId.value = userId
     theme.value = 'system'
     layout.value = { ...defaultLayoutPreferences }
+    lastProjectId.value = null
 
     let savedPreferences
 
@@ -163,6 +167,10 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
       theme.value = savedPreferences.theme
     }
 
+    if (typeof savedPreferences.lastProjectId === 'string') {
+      lastProjectId.value = savedPreferences.lastProjectId
+    }
+
     const parsedLayoutPreferences = parseLayoutPreferences(savedPreferences.layout)
 
     if (parsedLayoutPreferences) {
@@ -175,6 +183,7 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     activeUserId.value = null
     theme.value = 'system'
     layout.value = { ...defaultLayoutPreferences }
+    lastProjectId.value = null
   }
 
   /** Persists the complete settings record only while a Firebase Auth user owns the current workspace. */
@@ -186,6 +195,7 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
     try {
       await saveFirestoreUserPreferences(activeUserId.value, {
         layout: layout.value,
+        lastProjectId: lastProjectId.value,
         theme: theme.value,
       })
     } catch {
@@ -195,6 +205,12 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
 
   function setTheme (themeName: ThemeName) {
     theme.value = themeName
+    void persistPreferences()
+  }
+
+  /** Remembers the active Google Cloud project so it is restored the next time this user opens the workspace. */
+  function setLastProjectId (projectId: string | null) {
+    lastProjectId.value = projectId
     void persistPreferences()
   }
 
@@ -256,7 +272,9 @@ export const useUserPreferencesStore = defineStore('user-preferences', () => {
   return {
     clearUser,
     initialize,
+    lastProjectId,
     layout,
+    setLastProjectId,
     setPanelAlignment,
     setPanelHeight,
     setPanelVisibility,

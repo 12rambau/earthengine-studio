@@ -91,7 +91,7 @@
   /** Selects the Google Cloud project used by the connected account's workspace. */
   import type { GoogleCloudProject } from '@/services/googleProjects'
   import { storeToRefs } from 'pinia'
-  import { computed, ref, watch } from 'vue'
+  import { computed, ref } from 'vue'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
   import { useGoogleProjectsStore } from '@/stores/googleProjects'
 
@@ -101,8 +101,8 @@
   /** Holds the text that narrows the complete project list without changing the selected project. */
   const projectFilter = ref<string | null>(null)
 
-  /** Exposes the in-memory account token needed to load its visible Cloud projects. */
-  const { accessToken, profile } = storeToRefs(useGoogleAuthStore())
+  /** Exposes whether an account is connected so the selector can be enabled. */
+  const { profile } = storeToRefs(useGoogleAuthStore())
 
   /** Shares the selected project with future Google Cloud and Earth Engine features. */
   const googleProjectsStore = useGoogleProjectsStore()
@@ -127,16 +127,6 @@
       return project.name.toLocaleLowerCase().includes(filter) || project.id.toLocaleLowerCase().includes(filter)
     })
   })
-
-  /** Replaces the project list and its default selection whenever Google supplies a new account token. */
-  watch(accessToken, token => {
-    if (!token) {
-      googleProjectsStore.clearProjects()
-      return
-    }
-
-    void googleProjectsStore.loadProjects(token)
-  }, { immediate: true })
 
   /** Applies a project selection and returns the user to the workspace. */
   function selectProject (project: GoogleCloudProject) {

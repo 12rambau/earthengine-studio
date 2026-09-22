@@ -24,8 +24,9 @@ service cloud.firestore {
     function isValidWorkspaceSettings() {
       let data = request.resource.data;
       let layout = data.layout;
-      return hasOnlyFields(data, ['layout', 'theme', 'updatedAt'])
+      return hasOnlyFields(data, ['layout', 'lastProjectId', 'theme', 'updatedAt'])
         && data.theme in ['dark', 'light', 'system']
+        && (data.lastProjectId is string || data.lastProjectId == null)
         && layout is map
         && hasOnlyFields(layout, [
           'panelAlignment',

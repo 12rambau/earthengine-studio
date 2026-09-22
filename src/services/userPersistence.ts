@@ -13,6 +13,7 @@ export interface FirebaseUserProfile {
 /** Represents the persisted workspace settings returned from a user's Firestore document. */
 export interface FirestoreUserPreferences {
   layout: unknown
+  lastProjectId: unknown
   theme: unknown
 }
 
@@ -40,6 +41,7 @@ export async function fetchFirestoreUserPreferences (userId: string): Promise<Fi
 
   return {
     layout: preferences.layout,
+    lastProjectId: preferences.lastProjectId,
     theme: preferences.theme,
   }
 }
@@ -47,10 +49,11 @@ export async function fetchFirestoreUserPreferences (userId: string): Promise<Fi
 /** Stores the full current workspace layout and appearance settings for one Firebase Auth user. */
 export async function saveFirestoreUserPreferences (
   userId: string,
-  preferences: { layout: object, theme: string },
+  preferences: { layout: object, lastProjectId: string | null, theme: string },
 ) {
   await setDoc(doc(requireFirestore(), 'users', userId, 'settings', 'workspace'), {
     layout: preferences.layout,
+    lastProjectId: preferences.lastProjectId,
     theme: preferences.theme,
     updatedAt: serverTimestamp(),
   })

@@ -76,6 +76,7 @@ describe('user preferences store', () => {
 
   it('restores the theme preference from Firestore', async () => {
     firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue({
+      lastProjectId: null,
       layout: defaultLayoutPreferences,
       theme: 'light',
     })
@@ -86,6 +87,19 @@ describe('user preferences store', () => {
     expect(userPreferencesStore.theme).toBe('light')
   })
 
+  it('restores the last selected project ID from Firestore', async () => {
+    firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue({
+      lastProjectId: 'earth-analysis',
+      layout: defaultLayoutPreferences,
+      theme: 'system',
+    })
+    const userPreferencesStore = useUserPreferencesStore()
+
+    await userPreferencesStore.initialize('google-subject')
+
+    expect(userPreferencesStore.lastProjectId).toBe('earth-analysis')
+  })
+
   it('restores the layout preferences from Firestore', async () => {
     const savedLayout = {
       ...defaultLayoutPreferences,
@@ -94,6 +108,7 @@ describe('user preferences store', () => {
       secondarySidebarVisible: false,
     }
     firebasePersistence.fetchFirestoreUserPreferences.mockResolvedValue({
+      lastProjectId: null,
       layout: savedLayout,
       theme: 'system',
     })
@@ -112,8 +127,23 @@ describe('user preferences store', () => {
 
     expect(userPreferencesStore.theme).toBe('dark')
     expect(firebasePersistence.saveFirestoreUserPreferences).toHaveBeenLastCalledWith('google-subject', {
+      lastProjectId: null,
       layout: defaultLayoutPreferences,
       theme: 'dark',
+    })
+  })
+
+  it('persists the last selected project ID for the active Firebase user', async () => {
+    const userPreferencesStore = useUserPreferencesStore()
+
+    await userPreferencesStore.initialize('google-subject')
+    userPreferencesStore.setLastProjectId('earth-analysis')
+
+    expect(userPreferencesStore.lastProjectId).toBe('earth-analysis')
+    expect(firebasePersistence.saveFirestoreUserPreferences).toHaveBeenLastCalledWith('google-subject', {
+      lastProjectId: 'earth-analysis',
+      layout: defaultLayoutPreferences,
+      theme: 'system',
     })
   })
 
@@ -138,6 +168,7 @@ describe('user preferences store', () => {
       secondarySidebarWidth: 420,
     })
     expect(firebasePersistence.saveFirestoreUserPreferences).toHaveBeenLastCalledWith('google-subject', {
+      lastProjectId: null,
       layout: userPreferencesStore.layout,
       theme: 'system',
     })

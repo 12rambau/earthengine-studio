@@ -4,6 +4,7 @@ import {
   fetchGoogleCloudProjects,
   type GoogleCloudProject,
 } from '@/services/googleProjects'
+import { useUserPreferencesStore } from '@/stores/userPreferences'
 
 /** Describes the visible loading state of the user's Google Cloud project list. */
 export type GoogleProjectStatus = 'error' | 'idle' | 'loading' | 'ready'
@@ -37,7 +38,7 @@ export const useGoogleProjectsStore = defineStore('google-projects', () => {
     status.value = 'idle'
   }
 
-  /** Loads and selects the first alphabetically displayed project available to the account token. */
+  /** Loads the account's projects and restores its last selected project, falling back to the first one available. */
   async function loadProjects (accessToken: string) {
     const requestVersion = ++loadVersion
 
@@ -53,8 +54,10 @@ export const useGoogleProjectsStore = defineStore('google-projects', () => {
         return
       }
 
+      const lastProjectId = useUserPreferencesStore().lastProjectId
+
       projects.value = availableProjects
-      selectedProject.value = availableProjects[0] ?? null
+      selectedProject.value = availableProjects.find(project => project.id === lastProjectId) ?? availableProjects[0] ?? null
       status.value = 'ready'
     } catch (loadError) {
       if (requestVersion !== loadVersion) {
@@ -66,9 +69,10 @@ export const useGoogleProjectsStore = defineStore('google-projects', () => {
     }
   }
 
-  /** Changes the project used by the workspace to a project from the active account's list. */
+  /** Changes the project used by the workspace and remembers it for this user's next session. */
   function selectProject (project: GoogleCloudProject) {
     selectedProject.value = project
+    useUserPreferencesStore().setLastProjectId(project.id)
   }
 
   return {
