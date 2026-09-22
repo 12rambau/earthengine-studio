@@ -43,8 +43,8 @@
         >
           <v-text-field
             v-if="renamingTabId === tab.id"
+            :ref="setRenameInputRef"
             v-model="renameValue"
-            autofocus
             class="editor-tab-rename"
             density="compact"
             hide-details
@@ -98,8 +98,9 @@
 <script lang="ts" setup>
   /** Hosts the tabbed Earth Engine script editor. */
   import type { ScriptTab } from '@/stores/scriptEditor'
+  import type { ComponentPublicInstance } from 'vue'
   import { storeToRefs } from 'pinia'
-  import { computed, ref } from 'vue'
+  import { computed, nextTick, ref } from 'vue'
   import { useScriptEditorStore } from '@/stores/scriptEditor'
   import ScriptEditor from './editor-pane/ScriptEditor.vue'
   import { resolveScriptLanguage } from './editor-pane/scriptLanguage'
@@ -142,10 +143,26 @@
   /** Holds the in-progress tab name until it is committed or discarded. */
   const renameValue = ref('')
 
-  /** Opens the inline rename field for a tab, seeded with its current name. */
+  /** Tracks the rename field's underlying input element so it can be focused and pre-selected. */
+  let renameInputEl: HTMLInputElement | null = null
+
+  /** Captures a reference to the rename field's input element as it mounts. */
+  function setRenameInputRef (component: Element | ComponentPublicInstance | null) {
+    const el = (component as ComponentPublicInstance | null)?.$el as HTMLElement | undefined
+    renameInputEl = el?.querySelector('input') ?? null
+  }
+
+  /** Opens the inline rename field for a tab, pre-selecting the name up to its extension. */
   function startRenaming (tab: ScriptTab) {
     renamingTabId.value = tab.id
     renameValue.value = tab.name
+
+    nextTick(() => {
+      const extensionIndex = tab.name.lastIndexOf('.')
+      const selectionEnd = extensionIndex > 0 ? extensionIndex : tab.name.length
+      renameInputEl?.focus()
+      renameInputEl?.setSelectionRange(0, selectionEnd)
+    })
   }
 
   /** Applies the edited name to the tab and closes the inline rename field. */
@@ -180,11 +197,24 @@
   }
 
   .editor-tab-rename {
+    font-size: inherit;
     inline-size: 96px;
   }
 
+  .editor-tab-rename :deep(.v-field),
+  .editor-tab-rename :deep(.v-field__field),
+  .editor-tab-rename :deep(.v-field__input),
   .editor-tab-rename :deep(input) {
     font-size: inherit;
+    line-height: inherit;
+  }
+
+  .editor-tab-rename :deep(.v-field__input) {
+    padding: 0;
+    min-height: unset;
+  }
+
+  .editor-tab-rename :deep(input) {
     text-align: center;
   }
 </style>
