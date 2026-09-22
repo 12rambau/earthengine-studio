@@ -6,9 +6,9 @@
     rounded="lg"
   >
     <v-treeview
-      v-model:activated="activatedValues"
       v-model:opened="openedValues"
       activatable
+      :activated="activatedValues"
       aria-label="Earth Engine data catalog"
       fluid
       hide-actions
@@ -19,6 +19,7 @@
       :items="catalogItems"
       open-on-click
       return-object
+      @update:activated="onActivatedUpdate"
     >
       <template #prepend="{ isOpen, item }">
         <v-icon
@@ -178,6 +179,17 @@
     if (item?.previewTarget) {
       emit('preview', item.previewTarget)
     }
+  }
+
+  /** Ignores folder activation so only dataset leaves receive the active highlight. */
+  function onActivatedUpdate (items: CatalogTreeItem[]) {
+    const [item] = items
+
+    if (item && !item.previewTarget) {
+      return
+    }
+
+    activatedValues.value = items
   }
 
   /** Retrieves every public catalog branch when the tab is first displayed and retains partial results on failure. */
@@ -357,12 +369,17 @@
 
 <style scoped>
   .catalog-tree-card {
+    background-color: transparent;
     border-start-end-radius: 0;
     border-start-start-radius: 0;
   }
 
   .catalog-tree-card :deep(.v-treeview-indent-lines) {
     grid-template-columns: repeat(var(--v-indent-parts, 1), 28px);
+  }
+
+  .catalog-tree-card :deep(.v-treeview) {
+    background-color: transparent;
   }
 
   .catalog-tree-card :deep(.v-list-item) {
