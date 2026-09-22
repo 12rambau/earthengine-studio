@@ -86,6 +86,7 @@
               <span
                 v-bind="tooltipProps"
                 class="documentation-leaf"
+                @click.prevent.stop="openFunctionPreview(item)"
               >
                 {{ item.title }}
               </span>
@@ -151,12 +152,18 @@
         </template>
       </v-treeview>
     </template>
+
+    <function-documentation-dialog
+      v-model="isFunctionPreviewOpen"
+      :entry="functionPreviewEntry"
+      :href="functionPreviewHref"
+    />
   </v-card>
 </template>
 
 <script lang="ts" setup>
   /** Displays the active Google Cloud project's complete Earth Engine API registry as a hierarchy. */
-  import type { ApiDocumentationEntry } from './docsTree'
+  import type { ApiDocumentationEntry, DocumentationTreeItem } from './docsTree'
   import { storeToRefs } from 'pinia'
   import { computed, ref, watch } from 'vue'
   import { fetchEarthEngineApiDocumentation } from '@/services/earthEngine'
@@ -167,6 +174,7 @@
     filterDocumentationTree,
     getDocumentationTreeGroupValues,
   } from './docsTree'
+  import FunctionDocumentationDialog from './FunctionDocumentationDialog.vue'
 
   /** Receives whether the surrounding tab currently displays the Earth Engine API documentation. */
   const { active } = defineProps<{
@@ -194,6 +202,26 @@
 
   /** Exposes an Earth Engine initialization or registry error while keeping the surrounding workspace usable. */
   const loadError = ref<string | null>(null)
+
+  /** Holds the function selected from the tree for the fixed preview dialog. */
+  const functionPreviewEntry = ref<ApiDocumentationEntry | null>(null)
+
+  /** Links the previewed function to its official API reference section. */
+  const functionPreviewHref = ref<string | null>(null)
+
+  /** Determines whether the function preview dialog is visible. */
+  const isFunctionPreviewOpen = ref(false)
+
+  /** Displays the selected function's full documentation in a fixed dialog. */
+  function openFunctionPreview (item: DocumentationTreeItem) {
+    if (!item.documentation) {
+      return
+    }
+
+    functionPreviewEntry.value = item.documentation
+    functionPreviewHref.value = item.props?.href ?? null
+    isFunctionPreviewOpen.value = true
+  }
 
   /** Converts the loaded flat API registry into the hierarchy rendered by the tree view. */
   const documentationTree = computed(() => buildDocumentationTree(entries.value))
