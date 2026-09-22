@@ -45,11 +45,10 @@
 
       <template v-if="profile">
         <v-list-item
-          aria-label="Change Google account"
-          :disabled="!isConfigured || isLoading"
+          aria-label="Sign out from Google account"
           :subtitle="profile.email"
           :title="profile.name"
-          @click="signInWithGoogle"
+          @click="googleAuthStore.signOut"
         >
           <template #prepend>
             <v-avatar
@@ -69,19 +68,6 @@
           </template>
 
           <template #append>
-            <v-icon
-              icon="mdi-account-switch-outline"
-              size="small"
-            />
-          </template>
-        </v-list-item>
-
-        <v-list-item
-          aria-label="Sign out from Google account"
-          title="Sign out"
-          @click="googleAuthStore.signOut"
-        >
-          <template #prepend>
             <v-icon
               icon="mdi-logout"
               size="small"
@@ -115,6 +101,12 @@
 
       <v-divider />
 
+      <v-list-subheader>Connected services</v-list-subheader>
+
+      <connected-services-dialog />
+
+      <v-divider />
+
       <v-list-subheader>Preferences</v-list-subheader>
 
       <theme-selector-dialog />
@@ -135,6 +127,7 @@
   import { storeToRefs } from 'pinia'
   import { computed } from 'vue'
   import { useGoogleAuthStore } from '@/stores/googleAuth'
+  import ConnectedServicesDialog from './avatar-menu/ConnectedServicesDialog.vue'
   import KeyboardShortcutsDialog from './avatar-menu/KeyboardShortcutsDialog.vue'
   import LayoutPreferenceDialog from './avatar-menu/LayoutPreferenceDialog.vue'
   import ThemeSelectorDialog from './avatar-menu/ThemeSelectorDialog.vue'

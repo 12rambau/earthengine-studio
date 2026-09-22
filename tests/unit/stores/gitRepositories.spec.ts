@@ -4,7 +4,7 @@ import { useGitRepositoriesStore } from '@/stores/gitRepositories'
 
 const firebaseRuntime = vi.hoisted(() => ({
   addScope: vi.fn(),
-  auth: { currentUser: null as { uid: string } | null },
+  auth: { currentUser: null as { providerData: { providerId: string }[], uid: string } | null },
   credentialFromResult: vi.fn(),
   linkWithPopup: vi.fn(),
   reauthenticateWithPopup: vi.fn(),
@@ -28,7 +28,7 @@ describe('Git repositories store GitHub connection', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    firebaseRuntime.auth.currentUser = { uid: 'firebase-ada' }
+    firebaseRuntime.auth.currentUser = { providerData: [], uid: 'firebase-ada' }
     firebaseRuntime.credentialFromResult.mockReturnValue({ accessToken: 'github-access-token' })
   })
 
@@ -48,8 +48,8 @@ describe('Git repositories store GitHub connection', () => {
     expect(store.githubConnectionError).toBeNull()
   })
 
-  it('re-authenticates instead of linking when GitHub is already a connected provider', async () => {
-    firebaseRuntime.linkWithPopup.mockRejectedValue({ code: 'auth/provider-already-linked' })
+  it('re-authenticates instead of linking when GitHub is already a connected provider, opening a single popup', async () => {
+    firebaseRuntime.auth.currentUser = { providerData: [{ providerId: 'github.com' }], uid: 'firebase-ada' }
     firebaseRuntime.reauthenticateWithPopup.mockResolvedValue({
       user: { providerData: [{ displayName: 'ada-lovelace', providerId: 'github.com' }] },
     })
@@ -59,6 +59,7 @@ describe('Git repositories store GitHub connection', () => {
     await store.connectGitHubAccount()
 
     expect(firebaseRuntime.reauthenticateWithPopup).toHaveBeenCalledWith(firebaseRuntime.auth.currentUser, expect.anything())
+    expect(firebaseRuntime.linkWithPopup).not.toHaveBeenCalled()
     expect(store.githubAccessToken).toBe('github-access-token')
   })
 
@@ -71,5 +72,44 @@ describe('Git repositories store GitHub connection', () => {
 
     expect(firebaseRuntime.linkWithPopup).not.toHaveBeenCalled()
     expect(store.githubConnectionError).toBe('Sign in with Google before connecting GitHub.')
+  })
+
+  it('clears the GitHub session without touching connected repositories', async () => {
+    firebaseRuntime.linkWithPopup.mockResolvedValue({
+      user: { providerData: [{ displayName: 'ada-lovelace', providerId: 'github.com' }] },
+    })
+
+    const store = useGitRepositoriesStore()
+
+    await store.connectGitHubAccount()
+    store.disconnectGitHubAccount()
+
+    expect(store.githubAccessToken).toBeNull()
+    expect(store.githubUsername).toBeNull()
+    expect(store.githubConnectionError).toBeNull()
+  })
+
+  it('exposes GitHub as a generic provider descriptor reflecting the connection state', async () => {
+    firebaseRuntime.linkWithPopup.mockResolvedValue({
+      user: { providerData: [{ displayName: 'ada-lovelace', providerId: 'github.com' }] },
+    })
+
+    const store = useGitRepositoriesStore()
+
+    expect(store.gitProviders).toEqual([
+      expect.objectContaining({ id: 'github', username: null }),
+    ])
+
+    await store.connectGitHubAccount()
+
+    expect(store.gitProviders).toEqual([
+      expect.objectContaining({ id: 'github', username: 'ada-lovelace' }),
+    ])
+
+    store.disconnectGitHubAccount()
+
+    expect(store.gitProviders).toEqual([
+      expect.objectContaining({ id: 'github', username: null }),
+    ])
   })
 })

@@ -10,7 +10,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { firebaseAuth } from '@/services/firebase'
 import {
   connectGitRepository,
@@ -20,6 +20,18 @@ import {
 
 /** Requests read/write access to the connected account's repositories, matching the scope of the removed personal access token flow. */
 const githubRepositoryScope = 'repo'
+
+/** Describes a Git host that can be connected from the "Connected services" UI, independent of its underlying auth implementation. */
+export interface GitProviderState {
+  connect: () => Promise<void>
+  disconnect: () => void
+  error: string | null
+  icon: string
+  id: 'github'
+  isConnecting: boolean
+  label: string
+  username: string | null
+}
 
 /** Manages remote Git repositories used as the source of truth for Earth Engine JavaScript scripts. */
 export const useGitRepositoriesStore = defineStore('git-repositories', () => {
@@ -73,26 +85,58 @@ export const useGitRepositoriesStore = defineStore('git-repositories', () => {
       githubAccessToken.value = credential?.accessToken ?? null
       githubUsername.value = result.user.providerData.find(profile => profile.providerId === 'github.com')?.displayName ?? null
     } catch (connectionError) {
-      githubConnectionError.value = connectionError instanceof Error ? connectionError.message : 'Unable to connect GitHub.'
+      githubConnectionError.value = describeGitHubConnectionError(connectionError)
     } finally {
       isConnectingGitHub.value = false
     }
   }
 
-  /** Links GitHub as a new provider for this user, or re-authenticates it when it is already linked. */
-  async function authorizeGitHubProvider (user: User, provider: GithubAuthProvider) {
-    try {
-      return await linkWithPopup(user, provider)
-    } catch (linkError) {
-      const errorCode = linkError && typeof linkError === 'object' && 'code' in linkError ? linkError.code : undefined
+  /** Translates known Firebase Authentication error codes into messages the user can act on. */
+  function describeGitHubConnectionError (connectionError: unknown) {
+    const errorCode = connectionError && typeof connectionError === 'object' && 'code' in connectionError ? connectionError.code : undefined
 
-      if (errorCode === 'auth/provider-already-linked' || errorCode === 'auth/credential-already-in-use') {
-        return reauthenticateWithPopup(user, provider)
-      }
-
-      throw linkError
+    if (errorCode === 'auth/popup-blocked') {
+      return 'Your browser blocked the GitHub sign-in popup. Allow popups for this site and try again.'
     }
+
+    if (errorCode === 'auth/popup-closed-by-user' || errorCode === 'auth/cancelled-popup-request') {
+      return 'GitHub sign-in was cancelled.'
+    }
+
+    return connectionError instanceof Error ? connectionError.message : 'Unable to connect GitHub.'
   }
+
+  /**
+   * Links GitHub as a new provider for this user, or re-authenticates it when it is already linked.
+   * Picks the correct call upfront from the user's existing linked providers, since a second popup opened
+   * after the first one rejects is no longer tied to the original click and gets blocked by some browsers.
+   */
+  async function authorizeGitHubProvider (user: User, provider: GithubAuthProvider) {
+    const isAlreadyLinked = user.providerData.some(profile => profile.providerId === 'github.com')
+
+    return isAlreadyLinked ? reauthenticateWithPopup(user, provider) : linkWithPopup(user, provider)
+  }
+
+  /** Clears the GitHub session's token and displayed account without unlinking the provider from the Firebase user. */
+  function disconnectGitHubAccount () {
+    githubAccessToken.value = null
+    githubUsername.value = null
+    githubConnectionError.value = null
+  }
+
+  /** Exposes GitHub, and future Git hosts, as a uniform list for the "Connected services" UI. */
+  const gitProviders = computed<GitProviderState[]>(() => [
+    {
+      connect: connectGitHubAccount,
+      disconnect: disconnectGitHubAccount,
+      error: githubConnectionError.value,
+      icon: 'mdi-github',
+      id: 'github',
+      isConnecting: isConnectingGitHub.value,
+      label: 'GitHub',
+      username: githubUsername.value,
+    },
+  ])
 
   /** Connects a repository with its token, then populates its JavaScript filesystem without exposing credentials. */
   async function addRepository (input: GitRepositoryConnectionInput, accessToken: string) {
@@ -175,7 +219,9 @@ export const useGitRepositoriesStore = defineStore('git-repositories', () => {
     addRepository,
     connectGitHubAccount,
     createScript,
+    disconnectGitHubAccount,
     filesByRepository,
+    gitProviders,
     githubAccessToken,
     githubConnectionError,
     githubUsername,
