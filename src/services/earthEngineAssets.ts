@@ -54,9 +54,9 @@ export interface EarthEngineAssetPage {
 /** Provides the Earth Engine REST API root used by authenticated asset requests. */
 const earthEngineApiUrl = 'https://earthengine.googleapis.com/v1'
 
-/** Extracts the Google Cloud project ID from an Earth Engine resource name of the form `projects/{id}/...`. */
+/** Extracts the Google Cloud project ID from an Earth Engine resource name of the form `projects/{id}` or `projects/{id}/...`. */
 function extractEarthEngineProjectId (resourceName: string) {
-  const projectId = /^projects\/([^/]+)\//.exec(resourceName)?.[1]
+  const projectId = /^projects\/([^/]+)/.exec(resourceName)?.[1]
 
   if (!projectId) {
     throw new Error('Earth Engine returned an invalid resource name.')
