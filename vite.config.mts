@@ -48,6 +48,9 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  worker: {
+    format: 'es',
+  },
   test: {
     coverage: {
       include: ['src/**/*.{ts,vue}'],
