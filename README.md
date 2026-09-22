@@ -66,11 +66,15 @@ VITE_FIREBASE_PROJECT_ID=
 
 These values identify the Firebase project but are not secrets. Firebase security is enforced by Authentication and Firestore Security Rules, not by hiding this client configuration.
 
+Firebase Authentication authorizes `localhost` by default but not `127.0.0.1`; open the app through `http://localhost:3000` or the sign-in popup fails with `auth/unauthorized-domain`.
+
 ## Google API Access
 
 Firebase's Google provider requests Earth Engine and read-only Cloud Resource Manager scopes when the user explicitly connects or changes Google account. The provider access token remains in memory only and is used for the current browser session's Earth Engine and Google Cloud API calls. Firebase persists the application sign-in, but does not restore this Google API token after a browser restart; the user must reconnect Google services before an Earth Engine request on a restored session.
 
 Enable the Cloud Resource Manager API for the Google Cloud project used by the connected account when project selection is needed.
+
+Earth Engine requests also require the selected Google Cloud project to have the Earth Engine API enabled and to be [registered for Earth Engine access](https://code.earthengine.google.com/register); enabling the API alone is not sufficient for a project that has never used Earth Engine.
 
 Never add a Google client secret, Git token, or other credential to a `VITE_` variable. Persistent provider credentials require a future server-side integration.
 
