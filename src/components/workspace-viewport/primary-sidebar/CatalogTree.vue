@@ -19,7 +19,6 @@
       :items="catalogItems"
       open-on-click
       return-object
-      @click:select="previewCatalogItem"
     >
       <template #prepend="{ isOpen, item }">
         <v-icon
@@ -79,10 +78,10 @@
   const catalogItems = ref<CatalogTreeItem[]>([])
 
   /** Highlights the dataset most recently selected from either the tree or the header search. */
-  const activatedValues = ref<string[]>([])
+  const activatedValues = ref<CatalogTreeItem[]>([])
 
   /** Keeps every ancestor folder expanded for the currently highlighted dataset. */
-  const openedValues = ref<string[]>([])
+  const openedValues = ref<CatalogTreeItem[]>([])
 
   /** Indicates that the catalog's single up-front fetch is in progress. */
   const isLoading = ref(false)
@@ -172,15 +171,11 @@
     }
   }
 
-  /** Emits only a public dataset selected through the treeview, leaving folders and failure entries inert. */
-  function previewCatalogItem ({ id }: { id: unknown }) {
-    if (typeof id !== 'object' || id === null || !('previewTarget' in id)) {
-      return
-    }
+  /** Emits a preview whenever a dataset leaf becomes the treeview's activated item. */
+  function previewCatalogItem (items: CatalogTreeItem[]) {
+    const [item] = items
 
-    const item = id as CatalogTreeItem
-
-    if (item.previewTarget) {
+    if (item?.previewTarget) {
       emit('preview', item.previewTarget)
     }
   }
@@ -312,18 +307,21 @@
     }
   }, { immediate: true })
 
-  /** Finds every ancestor folder's value on the way to a target dataset value, or returns null when not found. */
-  function findAncestorPath (items: CatalogTreeItem[], value: string): string[] | null {
+  /** Opens the preview dialog whenever activation changes, whether from a tree click or a header search selection. */
+  watch(activatedValues, previewCatalogItem)
+
+  /** Finds every ancestor folder item on the way to a target dataset value, or returns null when not found. */
+  function findAncestorPath (items: CatalogTreeItem[], value: string): CatalogTreeItem[] | null {
     for (const item of items) {
       if (item.value === value) {
-        return []
+        return [item]
       }
 
       if (item.children) {
         const childPath = findAncestorPath(item.children, value)
 
         if (childPath) {
-          return [item.value, ...childPath]
+          return [item, ...childPath]
         }
       }
     }
@@ -339,14 +337,17 @@
         return
       }
 
-      const ancestorPath = findAncestorPath(items, value)
+      const path = findAncestorPath(items, value)
 
-      if (!ancestorPath) {
+      if (!path) {
         return
       }
 
-      openedValues.value = [...new Set([...openedValues.value, ...ancestorPath])]
-      activatedValues.value = [value]
+      const target = path.at(-1)
+      const ancestors = path.slice(0, -1)
+
+      openedValues.value = [...new Set([...openedValues.value, ...ancestors])]
+      activatedValues.value = target ? [target] : []
 
       await nextTick()
       document.querySelector('.catalog-tree-card .v-list-item--active')?.scrollIntoView({ block: 'center' })
@@ -362,5 +363,9 @@
 
   .catalog-tree-card :deep(.v-treeview-indent-lines) {
     grid-template-columns: repeat(var(--v-indent-parts, 1), 28px);
+  }
+
+  .catalog-tree-card :deep(.v-list-item) {
+    background-color: transparent;
   }
 </style>
