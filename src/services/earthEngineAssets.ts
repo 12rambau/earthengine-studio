@@ -54,6 +54,17 @@ export interface EarthEngineAssetPage {
 /** Provides the Earth Engine REST API root used by authenticated asset requests. */
 const earthEngineApiUrl = 'https://earthengine.googleapis.com/v1'
 
+/** Extracts the Google Cloud project ID from an Earth Engine resource name of the form `projects/{id}/...`. */
+function extractEarthEngineProjectId (resourceName: string) {
+  const projectId = /^projects\/([^/]+)\//.exec(resourceName)?.[1]
+
+  if (!projectId) {
+    throw new Error('Earth Engine returned an invalid resource name.')
+  }
+
+  return projectId
+}
+
 /** Retrieves every direct child asset of a project or folder, transparently following REST result pages. */
 export async function fetchEarthEngineAssets (accessToken: string, parent: string): Promise<EarthEngineAsset[]> {
   const assets: EarthEngineAsset[] = []
@@ -83,7 +94,8 @@ export async function fetchEarthEngineAssetPage (
   }
 
   const response = await fetch(requestUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': extractEarthEngineProjectId(parent) },
   })
 
   if (!response.ok) {
@@ -96,7 +108,8 @@ export async function fetchEarthEngineAssetPage (
 /** Retrieves complete metadata for one Earth Engine asset using its canonical asset ID. */
 export async function fetchEarthEngineAsset (accessToken: string, assetId: string): Promise<EarthEngineAsset> {
   const response = await fetch(new URL(`${earthEngineApiUrl}/${assetId}`), {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': extractEarthEngineProjectId(assetId) },
   })
 
   if (!response.ok) {
@@ -121,7 +134,8 @@ export async function fetchEarthEngineAssetFeatures (
   const requestUrl = new URL(`${earthEngineApiUrl}/${assetId}:listFeatures`)
   requestUrl.searchParams.set('pageSize', String(pageSize))
   const response = await fetch(requestUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': extractEarthEngineProjectId(assetId) },
   })
 
   if (!response.ok) {

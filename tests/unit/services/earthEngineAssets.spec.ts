@@ -36,7 +36,7 @@ describe('Earth Engine asset service', () => {
 
     expect(fetchStub.mock.calls[0][0].toString()).toBe('https://earthengine.googleapis.com/v1/projects/example/assets/image')
     expect(fetchStub).toHaveBeenCalledWith(expect.any(URL), {
-      headers: { Authorization: 'Bearer access-token' },
+      headers: { 'Authorization': 'Bearer access-token', 'X-Goog-User-Project': 'example' },
     })
     expect(asset).toMatchObject({
       bands: [{

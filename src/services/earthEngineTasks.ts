@@ -45,6 +45,17 @@ const maximumOperations = 1000
 /** Provides the Earth Engine REST API root used by authenticated operation requests. */
 const earthEngineApiUrl = 'https://earthengine.googleapis.com/v1'
 
+/** Extracts the Google Cloud project ID from an Earth Engine resource name of the form `projects/{id}/...`. */
+function extractEarthEngineProjectId (resourceName: string) {
+  const projectId = /^projects\/([^/]+)\//.exec(resourceName)?.[1]
+
+  if (!projectId) {
+    throw new Error('Earth Engine returned an invalid resource name.')
+  }
+
+  return projectId
+}
+
 /** Retrieves recent Earth Engine operations for a project, following result pages up to the task scan limit. */
 export async function fetchEarthEngineOperations (accessToken: string, projectId: string): Promise<EarthEngineOperation[]> {
   const operations: EarthEngineOperation[] = []
@@ -59,7 +70,8 @@ export async function fetchEarthEngineOperations (accessToken: string, projectId
     }
 
     const response = await fetch(requestUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': projectId },
     })
 
     if (!response.ok) {
@@ -77,7 +89,8 @@ export async function fetchEarthEngineOperations (accessToken: string, projectId
 /** Requests cancellation of a currently pending or running Earth Engine operation. */
 export async function cancelEarthEngineOperation (accessToken: string, operationName: string) {
   const response = await fetch(`${earthEngineApiUrl}/${operationName}:cancel`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': extractEarthEngineProjectId(operationName) },
     method: 'POST',
   })
 

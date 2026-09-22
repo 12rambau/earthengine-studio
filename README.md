@@ -24,6 +24,18 @@ The Vite application runs at `http://localhost:3000`. Firebase Emulator Suite ru
 
 Firebase's Firestore emulator requires a Java JDK 11 or newer. Install a JDK before running `npm run dev:firebase`.
 
+## Local Firebase Hosting
+
+To test the production bundle exactly as Firebase Hosting serves it, including the single-page application rewrite:
+
+```bash
+npm run preview:firebase
+```
+
+This builds into `dist/` and serves it from the Hosting emulator at `http://localhost:5100`, alongside the Authentication and Firestore emulators.
+
+A production build only connects to the emulators when `VITE_USE_FIREBASE_EMULATORS=true` is set explicitly, so copy `.env.dist` to `.env.local` before the first run. Without it, the build expects the deployed project configuration described below.
+
 ## Firebase User Data
 
 Firebase Authentication is the canonical identity and session store. The Firebase SDK owns the persistent browser authentication state and its tokens; the application never copies Firebase ID tokens or refresh tokens to Firestore, cookies, `localStorage`, or IndexedDB.

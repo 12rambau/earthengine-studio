@@ -31,7 +31,8 @@ export async function fetchEarthEngineApiDocumentation (accessToken: string, pro
   const requestUrl = new URL(`https://earthengine.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/algorithms`)
   requestUrl.searchParams.set('prettyPrint', 'false')
   const response = await fetch(requestUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    // Attributes API usage and enablement checks to the selected project rather than the OAuth client's own project.
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'X-Goog-User-Project': projectId },
   })
 
   if (!response.ok) {

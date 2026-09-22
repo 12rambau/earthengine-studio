@@ -11,7 +11,9 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 const demoFirebaseProjectId = 'demo-earthengine-studio'
 
 /** Identifies whether this browser session must use the local Firebase services rather than a deployed project. */
-export const isUsingFirebaseEmulators = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS !== 'false'
+// An explicit opt-in also covers production builds served by the Hosting emulator.
+export const isUsingFirebaseEmulators = import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true'
+  || (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS !== 'false')
 
 /** Holds the resolved Firebase configuration for either the local demo project or a deployed Firebase project. */
 const firebaseConfiguration = getFirebaseConfiguration()

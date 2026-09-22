@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-earthengine-studio"
+    "default": "demo-earthengine-studio",
+    "prod": "earthengine-studio-509409"
   }
 }
