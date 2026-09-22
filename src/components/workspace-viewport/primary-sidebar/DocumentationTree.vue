@@ -1,6 +1,6 @@
 <template>
   <v-card
-    class="ma-1"
+    class="documentation-tree-card ma-1"
     elevation="0"
     :loading="isLoading ? 'primary' : false"
     rounded="lg"
@@ -64,7 +64,7 @@
           <v-icon
             :color="item.iconColor"
             :icon="item.icon"
-            size="small"
+            size="x-small"
           />
         </template>
 
@@ -245,6 +245,18 @@
 </script>
 
 <style scoped>
+  .documentation-tree-card {
+    background-color: transparent;
+  }
+
+  .documentation-tree-card :deep(.v-treeview) {
+    background-color: transparent;
+  }
+
+  .documentation-tree-card :deep(.v-list-item) {
+    background-color: transparent;
+  }
+
   :deep(.v-treeview-indent-lines) {
     grid-template-columns: repeat(var(--v-indent-parts, 1), 28px);
   }
