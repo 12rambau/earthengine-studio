@@ -53,7 +53,7 @@
         <v-icon
           :color="item.iconColor"
           :icon="item.isFolder && isOpen ? 'mdi-folder-open' : item.icon"
-          size="small"
+          size="x-small"
         />
       </template>
 
@@ -365,8 +365,17 @@
 
 <style scoped>
   .asset-tree-card {
+    background-color: transparent;
     border-start-end-radius: 0;
     border-start-start-radius: 0;
+  }
+
+  .asset-tree-card :deep(.v-treeview) {
+    background-color: transparent;
+  }
+
+  .asset-tree-card :deep(.v-list-item) {
+    background-color: transparent;
   }
 
   .asset-tree-card :deep(.v-treeview-indent-lines) {
