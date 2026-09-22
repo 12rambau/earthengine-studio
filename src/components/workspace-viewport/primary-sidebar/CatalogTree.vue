@@ -26,21 +26,6 @@
         />
       </template>
 
-      <template #append="{ item }">
-        <v-btn
-          v-if="item?.catalogHref"
-          :aria-label="`Open ${item.title} catalog page`"
-          class="catalog-tree-link"
-          :href="item.catalogHref"
-          icon="mdi-open-in-new"
-          rel="noopener noreferrer"
-          size="x-small"
-          target="_blank"
-          :title="`Open ${item.title} catalog page`"
-          variant="text"
-          @click.stop
-        />
-      </template>
     </v-treeview>
   </v-card>
 </template>
@@ -63,7 +48,6 @@
 
   /** Represents one entry in the fully loaded public catalog hierarchy. */
   interface CatalogTreeItem {
-    catalogHref?: string
     children?: CatalogTreeItem[]
     href?: string
     icon: string
@@ -131,7 +115,6 @@
         const catalogHref = getDatasetCatalogUrl(datasetId)
 
         return {
-          catalogHref,
           icon,
           iconColor,
           previewTarget: {
@@ -252,7 +235,6 @@
             const { color: iconColor, icon } = getCatalogAssetPresentation(dataset.type)
 
             return {
-              catalogHref: dataset.docs,
               icon,
               iconColor,
               previewTarget: {
@@ -323,18 +305,6 @@
   .catalog-tree-card {
     border-start-end-radius: 0;
     border-start-start-radius: 0;
-  }
-
-  .catalog-tree-card :deep(.catalog-tree-link) {
-    color: rgb(var(--v-theme-on-surface) / var(--v-medium-emphasis-opacity));
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .catalog-tree-card :deep(.v-list-item:hover .catalog-tree-link),
-  .catalog-tree-card :deep(.v-list-item:focus-within .catalog-tree-link) {
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .catalog-tree-card :deep(.v-treeview-indent-lines) {

@@ -1,36 +1,29 @@
 <template>
   <v-dialog
     v-model="isOpen"
-    max-width="760"
+    content-class="catalog-preview-dialog"
+    location="top"
+    location-strategy="connected"
+    max-width="min(80vw, 1200px)"
+    origin="overlap"
     scrollable
+    target=".catalog-search-field .v-field"
+    transition="dialog-scale-transition"
+    viewport-margin="0"
+    width="100%"
   >
     <v-card
       v-if="target"
       aria-label="Dataset preview"
       :loading="isLoading ? 'primary' : false"
     >
-      <v-toolbar
-        density="compact"
-        :title="datasetTitle"
+      <v-sheet
+        class="d-flex align-center justify-center"
+        color="primary"
+        height="24"
       >
-        <template #prepend>
-          <v-icon
-            :color="presentation.color"
-            :icon="presentation.icon"
-          />
-        </template>
-
-        <template #append>
-          <v-btn
-            aria-label="Close dataset preview"
-            icon="mdi-close"
-            size="small"
-            title="Close dataset preview"
-            variant="text"
-            @click="isOpen = false"
-          />
-        </template>
-      </v-toolbar>
+        <span style="color: rgb(var(--v-theme-on-primary))">{{ datasetTitle }}</span>
+      </v-sheet>
 
       <v-card-text
         v-if="hasLoadError"
@@ -41,7 +34,10 @@
 
       <template v-else>
         <v-card-text>
-          <v-row density="compact">
+          <v-row
+            align="end"
+            density="compact"
+          >
             <v-col
               v-if="previewHref"
               cols="12"
@@ -60,6 +56,16 @@
               :md="previewHref ? '8' : '12'"
             >
               <v-list density="compact">
+                <v-list-item title="Catalog page">
+                  <template #subtitle>
+                    <a
+                      :href="target.catalogHref"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >{{ target.catalogHref }}</a>
+                  </template>
+                </v-list-item>
+
                 <v-list-item
                   :subtitle="target.assetName"
                   title="Earth Engine asset"
@@ -80,65 +86,77 @@
                   title="Provider"
                 />
               </v-list>
+
+              <v-chip-group
+                v-if="tags.length > 0"
+                aria-label="Dataset tags"
+                class="px-4"
+              >
+                <v-chip
+                  v-for="tag in tags"
+                  :key="tag"
+                  label
+                  size="x-small"
+                >{{ tag }}</v-chip>
+              </v-chip-group>
+
+              <v-text-field
+                class="catalog-snippet-field px-4 mt-3"
+                density="compact"
+                hide-details
+                label="Earth Engine"
+                :model-value="snippet"
+                readonly
+                variant="outlined"
+              >
+                <template #append-inner>
+                  <v-btn
+                    aria-label="Copy Earth Engine snippet"
+                    icon="mdi-content-copy"
+                    size="x-small"
+                    title="Copy Earth Engine snippet"
+                    variant="text"
+                    @click="copySnippet"
+                  />
+                </template>
+              </v-text-field>
             </v-col>
           </v-row>
-
-          <v-chip-group
-            v-if="tags.length > 0"
-            aria-label="Dataset tags"
-          >
-            <v-chip
-              v-for="tag in tags"
-              :key="tag"
-              label
-              size="x-small"
-            >{{ tag }}</v-chip>
-          </v-chip-group>
-
-          <v-text-field
-            density="compact"
-            hide-details
-            label="Earth Engine"
-            :model-value="snippet"
-            readonly
-            variant="outlined"
-          >
-            <template #append-inner>
-              <v-btn
-                aria-label="Copy Earth Engine snippet"
-                icon="mdi-content-copy"
-                size="x-small"
-                title="Copy Earth Engine snippet"
-                variant="text"
-                @click="copySnippet"
-              />
-            </template>
-          </v-text-field>
-
-          <v-btn
-            class="mt-2"
-            :href="target.catalogHref"
-            prepend-icon="mdi-open-in-new"
-            rel="noopener noreferrer"
-            target="_blank"
-            text="Open catalog page"
-            variant="text"
-          />
         </v-card-text>
 
         <v-tabs
           v-model="activeTab"
+          aria-label="Dataset preview tabs"
+          class="my-1 px-4"
           density="compact"
+          height="24"
+          hide-slider
         >
           <v-tab
+            class="catalog-preview-tab"
+            :class="{ 'catalog-preview-tab--inactive': activeTab !== 'description' }"
+            density="compact"
+            min-width="0"
+            rounded="sm"
+            size="medium"
+            slim
             text="Description"
             value="description"
+            :variant="activeTab === 'description' ? 'tonal' : 'text'"
           />
 
           <v-tab
             v-if="bands.length > 0"
+            class="ms-1 catalog-preview-tab"
+            :class="{ 'catalog-preview-tab--inactive': activeTab !== 'bands' }"
+            density="compact"
+            min-width="0"
+            rounded="sm"
+            size="medium"
+            slim
             text="Bands"
             value="bands"
+            :variant="activeTab === 'bands' ? 'tonal' : 'text'"
           />
         </v-tabs>
 
@@ -159,28 +177,30 @@
             v-if="bands.length > 0"
             value="bands"
           >
-            <v-table density="compact">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Wavelength</th>
-                  <th>GSD</th>
-                </tr>
-              </thead>
+            <v-card-text>
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Wavelength</th>
+                    <th>GSD</th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                <tr
-                  v-for="band in bands"
-                  :key="band.name"
-                >
-                  <td>{{ band.name }}</td>
-                  <td>{{ band.description ?? '' }}</td>
-                  <td>{{ band['gee:wavelength'] ?? '' }}</td>
-                  <td>{{ band.gsd ? `${band.gsd} m` : '' }}</td>
-                </tr>
-              </tbody>
-            </v-table>
+                <tbody>
+                  <tr
+                    v-for="band in bands"
+                    :key="band.name"
+                  >
+                    <td>{{ band.name }}</td>
+                    <td>{{ band.description ?? '' }}</td>
+                    <td>{{ band['gee:wavelength'] ?? '' }}</td>
+                    <td>{{ band.gsd ? `${band.gsd} m` : '' }}</td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card-text>
           </v-tabs-window-item>
         </v-tabs-window>
       </template>
@@ -195,7 +215,6 @@
   import {
     type CatalogPreviewTarget,
     fetchCatalogCollection,
-    getCatalogAssetPresentation,
     type StacBand,
     type StacCollection,
   } from './catalog'
@@ -244,9 +263,6 @@
 
   /** Resolves the collection's canonical asset type for labels, snippets, and semantic iconography. */
   const assetType = computed(() => collection.value?.['gee:type'] ?? props.target?.type ?? 'unknown')
-
-  /** Reuses the shared catalog mapping so preview and tree asset types remain visually consistent. */
-  const presentation = computed(() => getCatalogAssetPresentation(assetType.value))
 
   /** Selects the official preview image when present and otherwise keeps the community thumbnail. */
   const previewHref = computed(() => {
@@ -335,3 +351,34 @@
     }
   }, { immediate: true })
 </script>
+
+<style scoped>
+  .catalog-preview-tab.v-tab--selected {
+    color: rgb(var(--v-theme-primary));
+  }
+
+  .catalog-preview-tab--inactive {
+    color: color-mix(in srgb, rgb(var(--v-theme-on-background)) calc(var(--v-medium-emphasis-opacity) * 100%), transparent);
+  }
+
+  /* Matches the compact metadata list's font size and keeps the snippet field visually lightweight. */
+  .catalog-snippet-field :deep(.v-field__input) {
+    font-size: 10px;
+    min-height: 24px;
+    padding-block: 4px;
+  }
+
+  .catalog-snippet-field :deep(.v-label) {
+    font-size: 10px;
+  }
+
+  .catalog-snippet-field :deep(.v-field__append-inner) {
+    padding-block-start: 0;
+  }
+
+  /* Keeps the connected strategy's vertical placement but recenters the dialog horizontally. */
+  :global(.catalog-preview-dialog) {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+</style>
