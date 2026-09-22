@@ -9,6 +9,7 @@ import {
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { firebaseAuth, firebaseAuthReady } from '@/services/firebase'
+import { googleCloudPlatformScope } from '@/services/geminiAssistant'
 import {
   googleCloudProjectReadScope,
   googleEarthEngineScope,
@@ -70,6 +71,7 @@ export const useGoogleAuthStore = defineStore('google-auth', () => {
     error.value = null
     status.value = 'authorizing'
     const provider = new GoogleAuthProvider()
+    provider.addScope(googleCloudPlatformScope)
     provider.addScope(googleCloudProjectReadScope)
     provider.addScope(googleEarthEngineScope)
     provider.setCustomParameters({ prompt: 'select_account' })

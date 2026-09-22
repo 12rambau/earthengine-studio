@@ -76,6 +76,14 @@ Enable the Cloud Resource Manager API for the Google Cloud project used by the c
 
 Earth Engine requests also require the selected Google Cloud project to have the Earth Engine API enabled and to be [registered for Earth Engine access](https://code.earthengine.google.com/register); enabling the API alone is not sufficient for a project that has never used Earth Engine.
 
+## AI Assistant
+
+The secondary sidebar hosts a Gemini chat that calls Vertex AI with the connected user's own token, so every reply is billed to and quota-attributed against the project chosen in the project selector, never against the application's Firebase project.
+
+Enable the Vertex AI API on that project before the first request. The sign-in consent therefore requests the `cloud-platform` scope, which Google requires for Vertex AI and which is broader than the read-only scope used for project listing.
+
+Only the `ask` mode is implemented; `plan` and `agent` are shown but disabled.
+
 Never add a Google client secret, Git token, or other credential to a `VITE_` variable. Persistent provider credentials require a future server-side integration.
 
 ## Quality Checks
