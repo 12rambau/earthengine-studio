@@ -18,26 +18,6 @@
       </v-toolbar>
 
       <v-card-text>
-        <v-btn-toggle
-          v-model="provider"
-          aria-label="Git provider"
-          class="mb-4"
-          color="primary"
-          mandatory
-        >
-          <v-btn
-            prepend-icon="mdi-github"
-            text="GitHub"
-            value="github"
-          />
-
-          <v-btn
-            prepend-icon="mdi-gitlab"
-            text="GitLab"
-            value="gitlab"
-          />
-        </v-btn-toggle>
-
         <v-text-field
           v-model="repositoryUrl"
           autocomplete="url"
@@ -46,34 +26,39 @@
           variant="outlined"
         />
 
-        <v-text-field
-          v-model="accessToken"
-          :append-inner-icon="isTokenVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
-          autocomplete="off"
-          label="Personal access token"
-          :type="isTokenVisible ? 'text' : 'password'"
-          variant="outlined"
-          @click:append-inner="isTokenVisible = !isTokenVisible"
-        />
-
-        <v-text-field
-          v-model="branch"
-          label="Branch"
-          placeholder="Default branch"
-          variant="outlined"
+        <v-btn
+          v-if="!githubUsername"
+          block
+          class="mb-4"
+          :loading="isConnectingGitHub"
+          prepend-icon="mdi-github"
+          text="Connect with GitHub"
+          variant="tonal"
+          @click="gitRepositoriesStore.connectGitHubAccount"
         />
 
         <v-alert
+          v-else
+          class="mb-4"
           density="compact"
-          type="info"
+          type="success"
           variant="tonal"
         >
-          The token is used only for this browser session and is not saved in preferences.
+          Connected to GitHub as {{ githubUsername }}
+        </v-alert>
+
+        <v-alert
+          v-if="githubConnectionError"
+          class="mb-4"
+          density="compact"
+          type="error"
+          variant="tonal"
+        >
+          {{ githubConnectionError }}
         </v-alert>
 
         <v-alert
           v-if="error"
-          class="mt-4"
           density="compact"
           type="error"
           variant="tonal"
@@ -93,7 +78,7 @@
 
         <v-btn
           color="primary"
-          :disabled="!repositoryUrl.trim()"
+          :disabled="!repositoryUrl.trim() || !githubAccessToken"
           :loading="isSubmitting"
           text="Connect repository"
           variant="flat"
@@ -105,8 +90,8 @@
 </template>
 
 <script lang="ts" setup>
-  /** Connects a GitHub or GitLab repository and retains its credential only for the active browser session. */
-  import type { GitProvider } from '@/services/gitRepositories'
+  /** Connects a GitHub repository authorized through Firebase's GitHub OAuth provider. */
+  import { storeToRefs } from 'pinia'
   import { computed, ref, watch } from 'vue'
   import { useGitRepositoriesStore } from '@/stores/gitRepositories'
 
@@ -131,55 +116,44 @@
     },
   })
 
-  /** Selects the provider-specific authentication and repository API contract. */
-  const provider = ref<GitProvider>('github')
-
-  /** Holds the GitHub or GitLab clone or web URL supplied for the remote script repository. */
+  /** Holds the GitHub clone or web URL supplied for the remote script repository. */
   const repositoryUrl = ref('')
 
-  /** Holds the optional personal access token without placing it in persistent browser storage. */
-  const accessToken = ref('')
-
-  /** Allows an existing non-default branch to be used as the script workspace root. */
-  const branch = ref('')
-
-  /** Controls whether the repository credential can be inspected while entering it. */
-  const isTokenVisible = ref(false)
-
-  /** Indicates that the provider repository metadata and file tree are being verified. */
+  /** Indicates that the repository metadata and file tree are being verified. */
   const isSubmitting = ref(false)
 
-  /** Displays provider validation or authorization failures without closing the dialog. */
+  /** Displays repository validation or authorization failures without closing the dialog. */
   const error = ref<string | null>(null)
 
   /** Connects the remote repository, then closes only when its JavaScript filesystem is ready to display. */
   const gitRepositoriesStore = useGitRepositoriesStore()
 
-  /** Restores neutral form state each time a new repository connection begins. */
+  /** Exposes the GitHub OAuth connection shared across every repository added during this browser session. */
+  const { githubAccessToken, githubConnectionError, githubUsername, isConnectingGitHub } = storeToRefs(gitRepositoriesStore)
+
+  /** Restores the repository form each time the dialog reopens, while keeping the GitHub connection for reuse. */
   watch(isOpen, dialogIsOpen => {
     if (!dialogIsOpen) {
       return
     }
 
-    provider.value = 'github'
     repositoryUrl.value = ''
-    accessToken.value = ''
-    branch.value = ''
-    isTokenVisible.value = false
     error.value = null
   })
 
   /** Verifies repository access and inserts the connected repository into the shared scripts filesystem. */
   async function addRepository () {
+    if (!githubAccessToken.value) {
+      return
+    }
+
     error.value = null
     isSubmitting.value = true
 
     try {
       await gitRepositoriesStore.addRepository({
-        branch: branch.value || undefined,
-        provider: provider.value,
         repositoryUrl: repositoryUrl.value,
-      }, accessToken.value)
+      }, githubAccessToken.value)
       isOpen.value = false
     } catch (connectionError) {
       error.value = connectionError instanceof Error ? connectionError.message : 'Unable to connect this repository.'

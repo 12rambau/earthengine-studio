@@ -24,7 +24,6 @@ describe('Git repository service', () => {
     vi.stubGlobal('fetch', fetchStub)
 
     const repository = await connectGitRepository({
-      provider: 'github',
       repositoryUrl: 'https://github.com/example/earth-engine-scripts.git',
     }, 'github-token')
 
@@ -34,7 +33,6 @@ describe('Git repository service', () => {
     expect(repository).toMatchObject({
       defaultBranch: 'main',
       projectPath: 'example/earth-engine-scripts',
-      provider: 'github',
     })
   })
 
@@ -57,7 +55,6 @@ describe('Git repository service', () => {
       id: 'github:example/earth-engine-scripts',
       name: 'earth-engine-scripts',
       projectPath: 'example/earth-engine-scripts',
-      provider: 'github',
       repositoryUrl: 'https://github.com/example/earth-engine-scripts',
       webUrl: 'https://github.com/example/earth-engine-scripts',
     }
@@ -70,35 +67,33 @@ describe('Git repository service', () => {
     ])
   })
 
-  it('creates a JavaScript file through GitLab with a provider commit request', async () => {
+  it('creates a JavaScript file through GitHub with a commit request', async () => {
     const fetchStub = vi.fn().mockResolvedValue({
       json: async () => ({}),
       ok: true,
     })
     vi.stubGlobal('fetch', fetchStub)
     const repository: GitRepository = {
-      apiUrl: 'https://gitlab.example/api/v4',
+      apiUrl: 'https://api.github.com',
       defaultBranch: 'main',
-      id: 'gitlab:https://gitlab.example/group/scripts',
-      name: 'scripts',
-      projectId: '42',
-      projectPath: 'group/scripts',
-      provider: 'gitlab',
-      repositoryUrl: 'https://gitlab.example/group/scripts',
-      webUrl: 'https://gitlab.example/group/scripts',
+      id: 'github:example/earth-engine-scripts',
+      name: 'earth-engine-scripts',
+      projectPath: 'example/earth-engine-scripts',
+      repositoryUrl: 'https://github.com/example/earth-engine-scripts',
+      webUrl: 'https://github.com/example/earth-engine-scripts',
     }
 
-    await createGitRepositoryScript(repository, 'gitlab-token', 'analysis/ndvi.js', 'Map.centerObject(point)')
+    await createGitRepositoryScript(repository, 'github-token', 'analysis/ndvi.js', 'Map.centerObject(point)')
 
     expect(fetchStub).toHaveBeenCalledWith(
-      'https://gitlab.example/api/v4/projects/42/repository/files/analysis%2Fndvi.js',
+      'https://api.github.com/repos/example/earth-engine-scripts/contents/analysis%2Fndvi.js',
       expect.objectContaining({
         body: JSON.stringify({
           branch: 'main',
-          commit_message: 'Create analysis/ndvi.js',
-          content: 'Map.centerObject(point)',
+          content: 'TWFwLmNlbnRlck9iamVjdChwb2ludCk=',
+          message: 'Create analysis/ndvi.js',
         }),
-        method: 'POST',
+        method: 'PUT',
       }),
     )
   })

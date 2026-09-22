@@ -44,7 +44,7 @@
       v-if="repositories.length === 0"
       class="text-medium-emphasis"
     >
-      Add a GitHub or GitLab repository to store and browse JavaScript scripts.
+      Add a GitHub repository to store and browse JavaScript scripts.
     </v-card-text>
 
     <template v-else>
@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts" setup>
-  /** Displays JavaScript files from GitHub and GitLab repositories connected for the active browser session. */
+  /** Displays JavaScript files from GitHub repositories connected for the active browser session. */
   import type { GitRepository, GitRepositoryFile } from '@/services/gitRepositories'
   import { storeToRefs } from 'pinia'
   import { computed, ref } from 'vue'
@@ -165,7 +165,7 @@
   /** Tracks expanded repository and directory paths using stable tree values. */
   const opened = ref<string[]>([])
 
-  /** Controls the connection dialog for adding a GitHub or GitLab repository. */
+  /** Controls the connection dialog for adding a GitHub repository. */
   const isAddRepositoryDialogOpen = ref(false)
 
   /** Controls the dialog that creates a JavaScript file in one connected repository. */
@@ -202,7 +202,7 @@
   function buildRepositoryTree (repository: GitRepository, files: GitRepositoryFile[]): ScriptTreeItem {
     const root: ScriptTreeItem = {
       children: [],
-      icon: repository.provider === 'github' ? 'mdi-github' : 'mdi-gitlab',
+      icon: 'mdi-github',
       repository,
       title: repository.name,
       type: 'repository',

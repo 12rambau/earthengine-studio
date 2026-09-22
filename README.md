@@ -86,6 +86,12 @@ Only the `ask` mode is implemented; `plan` and `agent` are shown but disabled.
 
 Never add a Google client secret, Git token, or other credential to a `VITE_` variable. Persistent provider credentials require a future server-side integration.
 
+## Script Repositories
+
+The Scripts tab connects GitHub repositories through Firebase's GitHub OAuth provider, linked to the signed-in Google identity, instead of a manually created personal access token. Enable GitHub under **Firebase Console → Authentication → Sign-in method** with a [GitHub OAuth App](https://github.com/settings/developers)'s client ID and secret, using the callback URL Firebase displays there (`https://<authDomain>/__/auth/handler`).
+
+The granted `repo` scope and access token stay in memory for the current browser session only, matching the Google provider token's lifetime.
+
 ## Quality Checks
 
 ```bash
