@@ -6,6 +6,9 @@
     rounded="lg"
   >
     <v-treeview
+      v-model:activated="activatedValues"
+      v-model:opened="openedValues"
+      activatable
       aria-label="Earth Engine data catalog"
       fluid
       hide-actions
@@ -32,7 +35,7 @@
 
 <script lang="ts" setup>
   /** Browses the public Earth Engine and community STAC catalogs without requiring authentication. */
-  import { ref, watch } from 'vue'
+  import { nextTick, ref, watch } from 'vue'
   import {
     buildCommunityThemes,
     type CatalogEntry,
@@ -57,10 +60,13 @@
     value: string
   }
 
-  /** Receives whether the catalog tab is currently visible to defer network activity until it is opened. */
-  const { active } = defineProps<{
+  /** Receives whether the catalog tab is currently visible and any dataset selected from the header search. */
+  const { active, selectedValue } = defineProps<{
     /** Indicates that the surrounding tab currently displays the public catalog. */
     active: boolean
+
+    /** Identifies the tree node that a header search selection requests be highlighted and revealed. */
+    selectedValue?: string | null
   }>()
 
   /** Requests the owning sidebar to display detailed metadata for a selected catalog leaf. */
@@ -71,6 +77,12 @@
 
   /** Holds the complete public catalog hierarchy after it has been loaded. */
   const catalogItems = ref<CatalogTreeItem[]>([])
+
+  /** Highlights the dataset most recently selected from either the tree or the header search. */
+  const activatedValues = ref<string[]>([])
+
+  /** Keeps every ancestor folder expanded for the currently highlighted dataset. */
+  const openedValues = ref<string[]>([])
 
   /** Indicates that the catalog's single up-front fetch is in progress. */
   const isLoading = ref(false)
@@ -299,6 +311,47 @@
       void loadCatalog()
     }
   }, { immediate: true })
+
+  /** Finds every ancestor folder's value on the way to a target dataset value, or returns null when not found. */
+  function findAncestorPath (items: CatalogTreeItem[], value: string): string[] | null {
+    for (const item of items) {
+      if (item.value === value) {
+        return []
+      }
+
+      if (item.children) {
+        const childPath = findAncestorPath(item.children, value)
+
+        if (childPath) {
+          return [item.value, ...childPath]
+        }
+      }
+    }
+
+    return null
+  }
+
+  /** Expands every ancestor folder and highlights the dataset requested from the header search. */
+  watch(
+    () => [selectedValue, catalogItems.value] as const,
+    async ([value, items]) => {
+      if (!value) {
+        return
+      }
+
+      const ancestorPath = findAncestorPath(items, value)
+
+      if (!ancestorPath) {
+        return
+      }
+
+      openedValues.value = [...new Set([...openedValues.value, ...ancestorPath])]
+      activatedValues.value = [value]
+
+      await nextTick()
+      document.querySelector('.catalog-tree-card .v-list-item--active')?.scrollIntoView({ block: 'center' })
+    },
+  )
 </script>
 
 <style scoped>

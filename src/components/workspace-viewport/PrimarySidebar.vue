@@ -73,6 +73,7 @@
       <v-tabs-window-item value="catalog">
         <catalog-tree
           :active="activeTab === 'catalog'"
+          :selected-value="catalogTreeSelectedValue"
           @preview="openCatalogPreview"
         />
       </v-tabs-window-item>
@@ -119,7 +120,8 @@
 <script lang="ts" setup>
   import type { CatalogPreviewTarget } from './primary-sidebar/catalog'
   /** Adapts the shared workspace sheet to represent the closable primary sidebar. */
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
+  import { useAppStore } from '@/stores/app'
   import AssetsTree from './primary-sidebar/AssetsTree.vue'
   import CatalogPreviewDialog from './primary-sidebar/CatalogPreviewDialog.vue'
   import CatalogTree from './primary-sidebar/CatalogTree.vue'
@@ -136,6 +138,9 @@
     isFullscreen: boolean
   }>()
 
+  /** Requests catalog dataset selections triggered from the header search. */
+  const appStore = useAppStore()
+
   /** Identifies the primary-sidebar tab currently displayed in the content area, beginning with the public catalog. */
   const activeTab = ref('catalog')
 
@@ -144,6 +149,9 @@
 
   /** Determines whether the selected dataset's preview dialog is visible. */
   const isCatalogPreviewOpen = ref(false)
+
+  /** Identifies the catalog tree node to highlight after a header search selection. */
+  const catalogTreeSelectedValue = ref<string | null>(null)
 
   /** Holds the canonical asset ID selected from the authenticated asset tree. */
   const assetPreviewId = ref<string | null>(null)
@@ -205,6 +213,17 @@
   function openImagePreview (assetId: string) {
     openAssetPreview(assetId, 'IMAGE')
   }
+
+  /** Switches to the catalog tab, opens the searched dataset's preview, and highlights it in the tree. */
+  watch(() => appStore.catalogSelectionRequest, request => {
+    if (!request) {
+      return
+    }
+
+    activeTab.value = 'catalog'
+    catalogTreeSelectedValue.value = request.treeValue
+    openCatalogPreview(request.previewTarget)
+  })
 
   /** Forwards primary sidebar actions to the workspace viewport. */
   const emit = defineEmits<{

@@ -81,12 +81,10 @@
 
             <v-list-item
               v-for="asset in section.assets"
-              :key="asset.href"
-              :href="asset.href"
-              rel="noopener noreferrer"
+              :key="asset.treeValue"
               :subtitle="asset.assetName"
-              target="_blank"
               :title="asset.title"
+              @click="selectAsset(asset)"
             >
               <template #prepend>
                 <v-icon
@@ -114,6 +112,7 @@
   import {
     buildCommunityThemes,
     type CatalogEntry,
+    type CatalogPreviewTarget,
     catalogUrl,
     fetchCatalogAssetType,
     fetchCatalogEntries,
@@ -122,25 +121,30 @@
     getCatalogAssetPresentation,
     getDatasetCatalogUrl,
   } from '@/components/workspace-viewport/primary-sidebar/catalog'
+  import { useAppStore } from '@/stores/app'
 
   /** Names the catalog sections that remain visible while search results are grouped. */
   type CatalogCategory = 'Google' | 'Publishers' | 'Community'
 
-  /** Represents one searchable asset together with its visual type and documentation destination. */
+  /** Represents one searchable asset together with its visual type and the identity used to select it in the tree. */
   interface CatalogSearchAsset {
     assetName: string
     category: CatalogCategory
-    href: string
     icon: string
     iconColor?: string
+    previewTarget: CatalogPreviewTarget
     tags: string[]
     title: string
+    treeValue: string
   }
 
   /** Defines the focus capability exposed by the Vuetify text field instance. */
   interface FocusableSearchField {
     focus: () => void
   }
+
+  /** Requests the primary sidebar to open and highlight a dataset selected from search results. */
+  const appStore = useAppStore()
 
   /** Holds the terms supplied in the header search field. */
   const query = ref('')
@@ -207,19 +211,28 @@
 
     return Promise.all(collections.map(async collection => {
       const assetType = await fetchCatalogAssetType(collection.href).catch(() => undefined)
-      const assetName = collection.title
-      const title = assetName.split('_').slice(1).join('_') || assetName
+      const datasetId = collection.title.replaceAll('_', '/')
+      const title = collection.title.split('_').slice(1).join('_') || collection.title
       const { color: iconColor, icon } = getCatalogAssetPresentation(assetType)
 
       return {
-        assetName,
+        assetName: datasetId,
         category: publisherHrefs.has(provider.href) ? 'Publishers' : 'Google',
-        href: getDatasetCatalogUrl(assetName.replaceAll('_', '/')),
         icon,
         iconColor,
+        previewTarget: {
+          assetName: datasetId,
+          catalogHref: getDatasetCatalogUrl(datasetId),
+          source: 'stac',
+          stacHref: collection.href,
+          tags: [provider.title],
+          title,
+          type: assetType ?? 'unknown',
+        },
         tags: [provider.title, assetType?.replaceAll('_', ' ') ?? ''],
         title,
-      }
+        treeValue: `dataset:${collection.href}`,
+      } satisfies CatalogSearchAsset
     }))
   }
 
@@ -253,12 +266,24 @@
           return {
             assetName: dataset.id,
             category: 'Community' as const,
-            href: dataset.docs,
             icon,
             iconColor,
+            previewTarget: {
+              assetName: dataset.id,
+              catalogHref: dataset.docs,
+              description: dataset.description,
+              previewHref: dataset.thumbnail,
+              provider: dataset.provider,
+              source: 'community' as const,
+              tags: [dataset.thematic_group, ...(dataset.tags?.split(',').map(tag => tag.trim()) ?? [])]
+                .filter(Boolean),
+              title: dataset.title,
+              type: dataset.type,
+            },
             tags: [dataset.thematic_group, dataset.type].filter(Boolean),
             title: dataset.title,
-          }
+            treeValue: `community:${dataset.docs}`,
+          } satisfies CatalogSearchAsset
         }))
         : []
 
@@ -267,6 +292,12 @@
       hasLoaded.value = true
       isLoading.value = false
     }
+  }
+
+  /** Opens the dataset's preview dialog and highlights it in the primary sidebar's catalog tree. */
+  function selectAsset (asset: CatalogSearchAsset) {
+    appStore.requestCatalogSelection(asset.previewTarget, asset.treeValue)
+    isOpen.value = false
   }
 
   /** Focuses catalog search when Ctrl+K is pressed, replacing the browser's default shortcut behavior. */
