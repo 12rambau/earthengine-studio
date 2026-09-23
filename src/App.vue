@@ -108,7 +108,7 @@
 
     await Promise.allSettled([
       preloadCatalog(),
-      new Promise<void>(resolve => window.setTimeout(resolve, 700)),
+      new Promise<void>(resolve => window.setTimeout(resolve)),
     ])
     isStarting.value = false
   })
